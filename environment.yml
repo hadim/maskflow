@@ -1,0 +1,34 @@
+# Create with `conda env create -f environment.yml`
+name: nn
+
+dependencies:
+  - python=3.6
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - opencv
+  - tifffile
+  - scikit-image
+  - scikit-learn
+  - ipykernel
+  - opencv
+  - cython
+  - protobuf
+  - absl-py
+  - pyyaml
+  - tqdm
+  - ipywidgets
+  - h5py
+  - werkzeug
+  - markdown
+  - joblib
+  - read-roi
+  - pip:
+    - keras
+    - imgaug
+    - pycocotools
+    - tensorflow-gpu
+    - tensorboard
+    - quilt
+    - https://github.com/matterport/Mask_RCNN/archive/cbff80f3e3f653a9eeee43d0d383a0385aba546b.zip

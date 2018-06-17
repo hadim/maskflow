@@ -1,0 +1,14 @@
+# See `maskflow/config.py` for details about parameters.
+
+NAME: "Shapes Detector"
+CLASS_NAMES: ["BG", "square", "circle", "triangle"]
+IMAGE_MAX_DIM: 512
+IMAGE_MIN_DIM: 200
+IMAGE_MIN_SCALE: 0
+IMAGE_RESIZE_MODE: square
+MAX_OBJECTS: 100
+MEAN_PIXEL: [123.7, 116.8, 103.9]
+RPN_ANCHOR_RATIOS: [0.5, 1, 2]
+BACKBONE: "resnet50"
+RPN_ANCHOR_SCALES: [32, 64, 128, 256, 512]
+
