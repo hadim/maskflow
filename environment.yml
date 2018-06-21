@@ -25,10 +25,9 @@ dependencies:
   - joblib
   - read-roi
   - pip:
-    - keras
+    - keras==2.1.6
     - imgaug
     - pycocotools
     - tensorflow-gpu
     - tensorboard
-    - quilt
     - https://github.com/matterport/Mask_RCNN/archive/cbff80f3e3f653a9eeee43d0d383a0385aba546b.zip

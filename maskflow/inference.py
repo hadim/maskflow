@@ -1,10 +1,8 @@
 from pathlib import Path
 import yaml
 import zipfile
-import importlib
 import tempfile
 
-import quilt
 import tensorflow as tf
 import numpy as np
 
@@ -17,55 +15,42 @@ def inference(image, model_location):
     """If model_location ends with ".zip", the archive will be downloaded.
     If it doesn't the quilt package will be used."""
 
-
+    if image.ndim == 2:
+        image = np.expand_dims(image, -1)
+    
     # Configurations of the model
     INPUT_NODE_IMAGE_NAME = "input_image"
     INPUT_NODE_IMAGE_METADATA_NAME = "input_image_meta"
     INPUT_NODE_ANCHORS_NAME = "input_anchors"
     OUTPUT_NODE_NAMES = ["detections", "mrcnn_class", "mrcnn_bbox", "mrcnn_mask", "rois"]
 
-    if not model_location.endswith(".zip"):
-        quilt_path = model_location
-        quilt_user = quilt_path.split("/")[0]
-        quilt_model_name = quilt_path.split("/")[1]
-
-        quilt.install(quilt_path)
-
-        quilt_model = importlib.import_module(f"quilt.data.{quilt_user}.{quilt_model_name}")
-
-        tf_model_path = quilt_model.model()
-        preprocessing_model_path = quilt_model.preprocessing_graph()
-        postprocessing_model_path = quilt_model.postprocessing_graph()
-        parameters_path = quilt_model.parameters()
-
-    else:
-        zip_tf_model_path = model_location
-
+    if str(model_location).endswith(".zip"):
         temp_path = Path(tempfile.mkdtemp())
-        with zipfile.ZipFile(zip_tf_model_path, "r") as z:
+        with zipfile.ZipFile(model_location, "r") as z:
             z.extractall(temp_path)
-
-        tf_model_path = temp_path / f"model.pb"
-        preprocessing_model_path = temp_path / "preprocessing_graph.pb"
-        postprocessing_model_path = temp_path / "postprocessing_graph.pb"
-        parameters_path = temp_path / "parameters.yml"
+        model_location = temp_path
+        
+    tf_model_path = model_location / f"maskrcnn.pb"
+    preprocessing_model_path = model_location / "preprocessing.pb"
+    postprocessing_model_path = model_location / "postprocessing.pb"
+    parameters_path = model_location / "config.yml"
 
     # Load parameters
     parameters = yaml.load(open(parameters_path))
 
-    BATCH_SIZE = 1
+    # TODO: allow batch size > 1
 
-    IMAGE_MIN_DIM = parameters["image_min_dimension"]
-    IMAGE_MAX_DIM = parameters["image_max_dimension"]
-    MIN_SCALE = parameters["minimum_scale"]
-    MEAN_PIXEL = parameters["mean_pixels"]
-    CLASS_IDS = parameters["class_ids"]
+    IMAGE_MIN_DIM = parameters["IMAGE_MIN_DIM"]
+    IMAGE_MAX_DIM = parameters["IMAGE_MAX_DIM"]
+    MIN_SCALE = parameters["IMAGE_MIN_SCALE"]
+    MEAN_PIXEL = parameters["MEAN_PIXEL"]
+    CLASS_IDS = [0 for _ in parameters["CLASS_NAMES"]]
     IMAGE_SHAPE = [IMAGE_MAX_DIM, IMAGE_MAX_DIM, 3]
 
-    BACKBONE_STRIDES = parameters["backbone_strides"]
-    RPN_ANCHOR_SCALES = parameters["rpn_anchor_scales"]
-    RPN_ANCHOR_RATIOS = parameters["rpn_anchor_ratios"]
-    RPN_ANCHOR_STRIDE = parameters["rpn_anchor_stride"]
+    BACKBONE_STRIDES = parameters["BACKBONE_STRIDES"]
+    RPN_ANCHOR_SCALES = parameters["RPN_ANCHOR_SCALES"]
+    RPN_ANCHOR_RATIOS = parameters["RPN_ANCHOR_RATIOS"]
+    RPN_ANCHOR_STRIDE = parameters["RPN_ANCHOR_STRIDE"]
 
     ## Preprocessing
 
@@ -165,7 +150,7 @@ def inference(image, model_location):
 
         feed_dict = {detections: raw_results["detections"],
                      mrcnn_mask: raw_results["mrcnn_mask"],
-                     original_image_shape: list(image.shape[:2]) + [1],
+                     original_image_shape: image.shape,
                      image_shape: IMAGE_SHAPE,
                      window: preprocessing_results["window"]}
 
@@ -177,4 +162,4 @@ def inference(image, model_location):
 
         postprocessing_results = sess.run(fetches, feed_dict=feed_dict)
 
-    return postprocessing_results
+    return parameters, postprocessing_results

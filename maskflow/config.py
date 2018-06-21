@@ -1,5 +1,5 @@
 import yaml
-
+from mrcnn import config
 
 DEFAULT_CONFIG = {}
 
@@ -7,7 +7,7 @@ DEFAULT_CONFIG = {}
 DEFAULT_CONFIG["NAME"] = "Default"
 
 # Name of the object classes
-DEFAULT_CONFIG["CLASS_NAMES"] = ["BG", "FG"]
+DEFAULT_CONFIG["CLASS_NAMES"] = ["object"]
 
 # Maximum number of ground truth instances in one image
 DEFAULT_CONFIG["MAX_OBJECTS"] = 100
@@ -105,3 +105,16 @@ def load_config(config_path=None):
 def save_config(config, config_path):
     with open(config_path, "w") as f:
         yaml.dump(config, f)
+
+
+class MaskflowConfig(config.Config):
+    def __init__(self, config_dict):
+        for key, value in config_dict.items():
+            setattr(self, key, value)
+        self.NUM_CLASSES = len(config_dict["CLASS_NAMES"]) + 1
+        self.NAME = config_dict["NAME"].replace(" ", "_")
+        super().__init__()
+        
+    def update(self):
+        config_dict = self.__dict__
+        self.__dict__.update(MaskflowConfig(config_dict).__dict__)

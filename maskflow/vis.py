@@ -44,7 +44,7 @@ def show_images(images_list, lines=None, size=14, cmap="viridis"):
         fig = axs[0].get_figure()
         display(fig)
 
-    interact(show, t=widgets.IntSlider(value=0, min=0, max=images_list[0].shape[0] - 1))
+    interact(show, t=widgets.IntSlider(value=0, min=0, max=len(images_list[0]) - 1))
     
     
 def random_colors(N, bright=True):
@@ -57,6 +57,7 @@ def random_colors(N, bright=True):
     hsv = [(i / N, 1, brightness) for i in range(N)]
     colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
     np.random.shuffle(colors)
+    colors = np.array(colors) * 255
     return colors
 
 def apply_mask(image, mask, color, alpha=0.5):
@@ -82,9 +83,8 @@ def get_masked_fixed_color(image, boxes, masks, class_ids, class_names,
         assert boxes.shape[0] == masks.shape[-1] == class_ids.shape[0]
 
     # Generate random colors
-    if colors == None:
-        classN = len(class_names)
-        colors = random_colors(classN)
+    if colors is None:
+        colors = random_colors(len(class_names))
 
     masked_image = np.array(image)
 
@@ -134,17 +134,26 @@ def draw_results(image, results, class_names,
                  draw_boxes=False, draw_masks=True,
                  draw_contours=True, draw_score=True):
     
+    if image.ndim == 3:
+        image = np.array([image])
+        
+    if isinstance(results, dict):
+        results = [results]
+    
     masked_image_batch = []
     
     if not colors:
         colors = random_colors(len(class_names))
-        colors = [(0, 255, 255), (255, 0, 0)]
 
     n_results = len(results)
     for i in tqdm.tqdm(range(n_results), total=n_results):
         r = results[i]
         im = image[i]
-        masked_image = get_masked_fixed_color(im, r['rois'], r['masks'], r['class_ids'],
+        
+        # Remove background ids
+        class_ids = r['class_ids'] - 1
+        
+        masked_image = get_masked_fixed_color(im, r['rois'], r['masks'], class_ids,
                                               class_names, colors, r['scores'],
                                               draw_boxes=draw_boxes, draw_masks=draw_masks,
                                               draw_contours=draw_contours, draw_score=draw_score)

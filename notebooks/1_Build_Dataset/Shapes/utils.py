@@ -67,7 +67,7 @@ def random_shape(height, width, class_names):
                         and location. Differs per shape type.
     """
     # Shape
-    shape = np.random.choice(class_names[1:])
+    shape = np.random.choice(class_names)
     # Color
     color = tuple([np.random.randint(0, 255) for _ in range(3)])
     # Center x, y
@@ -145,5 +145,6 @@ def generate_mask(bg_color, height, width, shapes, class_names):
         occlusion = np.logical_and(occlusion, np.logical_not(mask[:, :, i]))
         
     # Map class names to class IDs.
-    class_ids = np.array([class_names.index(s[0]) for s in shapes])
+    # +1 because 0 is background
+    class_ids = np.array([class_names.index(s[0]) + 1 for s in shapes])
     return mask, class_ids.astype(np.int32)
