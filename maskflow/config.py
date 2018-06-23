@@ -50,7 +50,7 @@ DEFAULT_CONFIG["MEAN_PIXEL"] = [123.7, 116.8, 103.9]
 DEFAULT_CONFIG["BACKBONE_STRIDES"] = [4, 8, 16, 32, 64]
 
 # Length of square anchor side in pixels
-DEFAULT_CONFIG["RPN_ANCHOR_SCALES"] = (32, 64, 128, 256, 512)
+DEFAULT_CONFIG["RPN_ANCHOR_SCALES"] = [32, 64, 128, 256, 512]
 
 # Ratios of anchors at each cell (width/height)
 # A value of 1 represents a square anchor, and 0.5 is a wide anchor

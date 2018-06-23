@@ -1,0 +1,58 @@
+version: 1
+
+# Dimension units are, if not specified:
+# - time: s
+# - distance/positions: um
+
+microscope:
+  psf_kernel_size: 15  # pixel
+
+  objective:
+    magnification: 100  # x
+
+  camera:
+    chip_size_width: 512  # pixel
+    chip_size_height: 512  # pixel
+
+    pixel_area_width: 11  # um
+    pixel_area_height: 11  # um
+
+    qe: 0.95
+    dark_noise: 1.6  # e-
+    bitdepth: 16  # bit
+    sensitivity: 4  # ADU/e-
+    baseline: 100  # ADU
+
+acquisition:
+  tpf: 5  # Time per frame (s)
+  n_frames: 10
+
+  channels:
+    "channel_1":
+      color: green
+      snr: 1.5
+      psf:
+        model_name: gaussian
+        parameters: { sigma: 0.135 }
+
+    "channel_2":
+      color: red
+      snr: 8
+      psf:
+        model_name: gaussian
+        parameters: { sigma: 0.135 }
+
+objects:
+
+  "microtubule":
+    model_name: "simple_microtubule"
+    channels: [channel_1]
+    photons_per_fluorophores: 800
+
+    parameters:
+      n_microtubules: { distribution: norm, parameters: {loc: 10, scale: 0} }
+      nucleation_rate: { distribution: norm, parameters: {loc: 1, scale: 0} }  # Between 0 and 1
+      growth_rate: { distribution: norm, parameters: {loc: 1, scale: 0} }  # um/s
+      initial_length: { distribution: norm, parameters: {loc: 2, scale: 0.3} }  # um
+      n_fluos: { distribution: norm, parameters: {loc: 1, scale: 0} }
+      spacing: 0.2  # in pixel, corresponds to the density of fluorophores
