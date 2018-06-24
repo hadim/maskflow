@@ -4,6 +4,7 @@ from pathlib import Path
 import zipfile
 import shutil
 import tempfile
+import re
 
 import numpy as np
 import skimage
