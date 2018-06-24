@@ -169,7 +169,7 @@ class FixedMaskRCNN(MaskRCNN):
         
     def load_weights(self, filepath, by_name=False, exclude=None):
         super().load_weights(filepath, by_name=by_name, exclude=exclude)
-        self.log_dir = str(Path(filepath).parent)
+        #self.log_dir = str(Path(filepath).parent)
         
     def set_log_dir(self, model_path=None):
         """Sets the model log directory and epoch counter.
