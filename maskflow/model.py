@@ -21,21 +21,6 @@ from mrcnn.model import MaskRCNN
 from . import processing_graph 
 
 
-def preprocess_image(original_image):
-    if len(original_image.shape) > 2:
-        original_image = [im for im in original_image]
-    else:
-        original_image = [original_image]
-
-    image = original_image.copy()
-    image = [skimage.exposure.rescale_intensity(im) for im in image]
-    image = [skimage.util.img_as_ubyte(im) for im in image]
-    image = [skimage.color.grey2rgb(im) for im in image]
-    image = np.array(image)
-
-    return image
-
-
 def split_as_batches(images, config):
     
     images = np.array(images)
@@ -90,9 +75,8 @@ def load_weights(model, init_with="last"):
                            exclude=["mrcnn_class_logits", "mrcnn_bbox_fc", "mrcnn_bbox", "mrcnn_mask"])
 
     elif init_with == "last":
-        raise Exception("Don't use last")
-        #model_path = model.find_last()
-        #model.load_weights(str(model_path), by_name=True)
+        model_path = model.find_last()
+        model.load_weights(str(model_path), by_name=True)
 
     else:
         log_dir = Path(model.model_dir) / init_with
