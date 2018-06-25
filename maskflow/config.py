@@ -40,7 +40,7 @@ DEFAULT_CONFIG["IMAGE_MAX_DIM"] = 1024
 # up scaling. For example, if set to 2 then images are scaled up to double
 # the width and height, or more, even if MIN_IMAGE_DIM doesn't require it.
 # Howver, in 'square' mode, it can be overruled by IMAGE_MAX_DIM.
-DEFAULT_CONFIG["IMAGE_MIN_SCALE"] = 1
+DEFAULT_CONFIG["IMAGE_MIN_SCALE"] = 1.0
 
 # Image mean (RGB)
 DEFAULT_CONFIG["MEAN_PIXEL"] = [123.7, 116.8, 103.9]
@@ -114,7 +114,7 @@ class MaskflowConfig(config.Config):
         self.NUM_CLASSES = len(config_dict["CLASS_NAMES"]) + 1
         self.NAME = config_dict["NAME"].replace(" ", "_")
         super().__init__()
-        
+
     def update(self):
         config_dict = self.__dict__
         self.__dict__.update(MaskflowConfig(config_dict).__dict__)
