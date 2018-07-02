@@ -1,10 +1,10 @@
 import logging
 import os
 
-from tf.keras.callbacks import Callback
+import tensorflow as tf
 
 
-class BasicLogger(Callback):
+class BasicLogger(tf.keras.callbacks.Callback):
     """Callback that prints metrics to stdout.
     # Arguments
         count_mode: One of "steps" or "samples".
@@ -88,7 +88,7 @@ class FileLogger(BasicLogger):
     def __init__(self, filename, log_on_batch_end=True, count_mode='samples', stateful_metrics=None):
         super().__init__(log_on_batch_end, count_mode, stateful_metrics)
         
-        self.logger = logging.getLogger(model.name)
+        self.logger = logging.getLogger(filename)
         self.logger.setLevel(logging.DEBUG)
 
         handler = logging.handlers.RotatingFileHandler(filename, mode="a", maxBytes=10000000, backupCount=1)
