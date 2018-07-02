@@ -42,7 +42,7 @@ class BasicLogger(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         
         self.epoch = epoch
-        self.print_func(f'Start epoch {epoch + 1}/{self.epochs}')
+        self.print(f'Start epoch {epoch + 1}/{self.epochs}')
         
         if self.use_steps:
             target = self.params['steps']
@@ -71,7 +71,7 @@ class BasicLogger(tf.keras.callbacks.Callback):
         # will be handled by on_epoch_end.
         if self.log_on_batch_end and self.seen < self.target:
             mess = f"Epoch: {self.epoch + 1} | Batch: {self.seen}/{self.target} | {self.log_values}"
-            self.print_func(mess)
+            self.print(mess)
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
@@ -80,7 +80,13 @@ class BasicLogger(tf.keras.callbacks.Callback):
                 self.log_values.append((k, logs[k]))
                 
         mess = f"End epoch {self.epoch+ 1} | Batch: {self.seen}/{self.target} | {self.log_values}"
-        self.print_func(mess)
+        self.print(mess)
+        
+    def print(self, mess):
+        try:
+            self.print_func(mess)
+        except Exception as ex:
+            print(f"Error with base logger: {ex}")
 
 
 class FileLogger(BasicLogger):
