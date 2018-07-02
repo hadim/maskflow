@@ -18,7 +18,7 @@ class BasicLogger(tf.keras.callbacks.Callback):
         ValueError: In case of invalid `count_mode`.
     """
 
-    def __init__(self, log_on_batch_end=True, count_mode='samples', stateful_metrics=None):
+    def __init__(self, log_on_batch_end=True, count_mode='steps', stateful_metrics=None):
         super().__init__()
 
         if count_mode == 'samples':
@@ -85,7 +85,7 @@ class BasicLogger(tf.keras.callbacks.Callback):
 
 class FileLogger(BasicLogger):
     
-    def __init__(self, filename, log_on_batch_end=True, count_mode='samples', stateful_metrics=None):
+    def __init__(self, filename, log_on_batch_end=True, count_mode='steps', stateful_metrics=None):
         super().__init__(log_on_batch_end, count_mode, stateful_metrics)
         
         self.logger = logging.getLogger(filename)
@@ -102,7 +102,7 @@ class FileLogger(BasicLogger):
 
 class TelegramLogger(BasicLogger):
     
-    def __init__(self, log_on_batch_end=False, count_mode='samples', stateful_metrics=None):
+    def __init__(self, log_on_batch_end=False, count_mode='steps', stateful_metrics=None):
         super().__init__(log_on_batch_end, count_mode, stateful_metrics)
                 
         if "TELEGRAM_TOKEN" not in os.environ.keys():

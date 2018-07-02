@@ -5,6 +5,7 @@ import zipfile
 import shutil
 import tempfile
 import re
+import multiprocessing
 
 import numpy as np
 import skimage
@@ -17,6 +18,8 @@ import tqdm
 
 import mrcnn
 from mrcnn.model import MaskRCNN
+from mrcnn.model import data_generator
+from mrcnn import model as mrcnn_model
 
 from . import processing_graph 
 
@@ -253,17 +256,17 @@ class FixedMaskRCNN(MaskRCNN):
 
         # Callbacks
         callbacks = [
-            keras.callbacks.TensorBoard(log_dir=self.log_dir,
+            tf.keras.callbacks.TensorBoard(log_dir=self.log_dir,
                                         histogram_freq=0, write_graph=True, write_images=False),
-            keras.callbacks.ModelCheckpoint(self.checkpoint_path,
+            tf.keras.callbacks.ModelCheckpoint(self.checkpoint_path,
                                             verbose=0, save_weights_only=True),
         ]
         
         callbacks += custom_callbacks
 
         # Train
-        log("\nStarting at epoch {}. LR={}\n".format(self.epoch, learning_rate))
-        log("Checkpoint Path: {}".format(self.checkpoint_path))
+        mrcnn_model.log("\nStarting at epoch {}. LR={}\n".format(self.epoch, learning_rate))
+        mrcnn_model.log("Checkpoint Path: {}".format(self.checkpoint_path))
         self.set_trainable(layers)
         self.compile(learning_rate, self.config.LEARNING_MOMENTUM)
 
@@ -286,5 +289,6 @@ class FixedMaskRCNN(MaskRCNN):
             max_queue_size=100,
             workers=workers,
             use_multiprocessing=True,
+            verbose=0
         )
         self.epoch = max(self.epoch, epochs)
