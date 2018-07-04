@@ -96,4 +96,4 @@ class MaskflowDataset(utils.Dataset):
         image = self.load_image(image_id)
         mask, class_ids = self.load_mask(image_id)
         bbox = utils.extract_bboxes(mask)
-        return image, mask, class_ids, bbox
+        return image, {"masks": mask, "class_ids": class_ids, "rois": bbox}

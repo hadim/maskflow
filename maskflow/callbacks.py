@@ -42,7 +42,7 @@ class BasicLogger(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         
         self.epoch = epoch
-        self.print(f'Start epoch {epoch + 1}/{self.epochs}')
+        self.print(f'Start epoch {epoch}/{self.epochs}')
         
         if self.use_steps:
             target = self.params['steps']
@@ -70,7 +70,7 @@ class BasicLogger(tf.keras.callbacks.Callback):
         # Skip progbar update for the last batch;
         # will be handled by on_epoch_end.
         if self.log_on_batch_end and self.seen < self.target:
-            mess = f"Epoch: {self.epoch + 1} | Batch: {self.seen}/{self.target} | {self.log_values}"
+            mess = f"Epoch: {self.epoch} | Batch: {self.seen}/{self.target} | {self.log_values}"
             self.print(mess)
 
     def on_epoch_end(self, epoch, logs=None):
@@ -79,7 +79,7 @@ class BasicLogger(tf.keras.callbacks.Callback):
             if k in logs:
                 self.log_values.append((k, logs[k]))
                 
-        mess = f"End epoch {self.epoch+ 1} | Batch: {self.seen}/{self.target} | {self.log_values}"
+        mess = f"End epoch {self.epoch} | Batch: {self.seen}/{self.target} | {self.log_values}"
         self.print(mess)
         
     def print(self, mess):

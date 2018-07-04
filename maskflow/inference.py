@@ -33,7 +33,7 @@ def inference(image, model_location):
     tf_model_path = model_location / f"maskrcnn.pb"
     preprocessing_model_path = model_location / "preprocessing.pb"
     postprocessing_model_path = model_location / "postprocessing.pb"
-    parameters_path = model_location / "config.yml"
+    parameters_path = model_location / "parameters.yml"
 
     # Load parameters
     parameters = yaml.load(open(parameters_path))

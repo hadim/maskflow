@@ -24,8 +24,9 @@ dependencies:
   - markdown
   - joblib
   - read-roi
+  - pytables
   - pip:
-    - keras==2.1.6
+    - keras
     - imgaug
     - pycocotools
     - tensorflow-gpu

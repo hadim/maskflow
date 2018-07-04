@@ -18,16 +18,24 @@ def get_ax(rows=1, cols=1, size=8):
     return ax
 
 
-def show_images(images_list, lines=None, size=14, cmap="viridis"):
+def show_images(images_list, size=14, cmap="viridis", use_widget=True, t=0):
 
-    if not isinstance(images_list, list):
-        images_list = [images_list]
+    if isinstance(images_list, list):
+        images_list = np.array(images_list)
 
+    for i, images in enumerate(images_list):
+        if images.ndim == 3 and images.shape[-1] <= 3:
+            images = [images]
+        elif images.ndim == 2:
+            images = [images]
+        images_list[i] = np.array(images)
+        
     axs = get_ax(rows=1, cols=len(images_list), size=size)
     if not isinstance(axs, np.ndarray):
         axs = [axs]
     else:
         axs = axs.flat
+        
     fig = axs[0].get_figure()
     plt.close(fig)
 
@@ -36,15 +44,13 @@ def show_images(images_list, lines=None, size=14, cmap="viridis"):
             ax.clear()
             ax.imshow(images_list[i][t], cmap=cmap)
             
-            if isinstance(lines, pd.DataFrame):
-                frame_data = lines[lines.frame == t]
-                for i, row in frame_data.iterrows():
-                    ax.plot(row["points"][:, 0], row["points"][:, 1], lw=2)
-            
         fig = axs[0].get_figure()
         display(fig)
 
-    interact(show, t=widgets.IntSlider(value=0, min=0, max=len(images_list[0]) - 1))
+    if use_widget:
+        interact(show, t=widgets.IntSlider(value=0, min=0, max=len(images_list[0]) - 1))
+    else:
+        show(t=t)
     
     
 def random_colors(N, bright=True):
@@ -71,7 +77,7 @@ def apply_mask(image, mask, color, alpha=0.5):
     return image
 
 def get_masked_fixed_color(image, boxes, masks, class_ids, class_names,
-                           colors = None, scores=None, title="",
+                           colors=None, scores=None, title="",
                            draw_boxes=False, draw_masks=False,
                            draw_contours=False, draw_score=False):
 
@@ -129,12 +135,17 @@ def get_masked_fixed_color(image, boxes, masks, class_ids, class_names,
     return masked_image
 
 
-def draw_results(image, results, class_names,
+def draw_objects(image, results, class_names,
                  resize_ratio=1, colors=None,
                  draw_boxes=False, draw_masks=True,
                  draw_contours=True, draw_score=True):
     
-    if image.ndim == 3:
+    if isinstance(image, list):
+        image = np.array(image)
+    
+    if image.ndim == 3 and image.shape[-1] <= 3:
+        image = np.array([image])
+    elif image.ndim == 2:
         image = np.array([image])
         
     if isinstance(results, dict):
@@ -153,8 +164,12 @@ def draw_results(image, results, class_names,
         # Remove background ids
         class_ids = r['class_ids'] - 1
         
+        if "scores" in r:
+            scores = r['scores']
+        else:
+            scores = None
         masked_image = get_masked_fixed_color(im, r['rois'], r['masks'], class_ids,
-                                              class_names, colors, r['scores'],
+                                              class_names, colors, scores,
                                               draw_boxes=draw_boxes, draw_masks=draw_masks,
                                               draw_contours=draw_contours, draw_score=draw_score)
         masked_image = cv2.resize(masked_image, None, interpolation=cv2.INTER_NEAREST,
