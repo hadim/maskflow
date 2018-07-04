@@ -94,7 +94,7 @@ class FileLogger(BasicLogger):
     def __init__(self, filename, log_on_batch_end=True, count_mode='steps', stateful_metrics=None):
         super().__init__(log_on_batch_end, count_mode, stateful_metrics)
         
-        self.logger = logging.getLogger(filename)
+        self.logger = logging.getLogger(f"FileLogger_{filename.parent}")
         self.logger.setLevel(logging.DEBUG)
 
         handler = logging.handlers.RotatingFileHandler(filename, mode="a", maxBytes=10000000, backupCount=1)

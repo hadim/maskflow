@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 from pathlib import Path
 import datetime
 import logging
@@ -132,9 +133,13 @@ class Maskflow:
         
         assert mode in ['training', 'inference']
         
-        logging.basicConfig(level=logging.INFO)
-        self.log = logging.getLogger("maskflow")
-        self.log.setLevel(logging.DEBUG)
+        self.log = logging.getLogger("Maskflow")
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s',
+                                      "%Y-%m-%d %H:%M:%S")
+        ch.setFormatter(formatter)
+        self.log.addHandler(ch)
         
         self.model_dir = Path(model_dir)
         self.config = config
