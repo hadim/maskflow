@@ -134,6 +134,7 @@ class Maskflow:
         assert mode in ['training', 'inference']
         
         self.log = logging.getLogger("Maskflow")
+        self.log.setLevel(logging.INFO)
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s',
