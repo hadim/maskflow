@@ -136,6 +136,7 @@ class Maskflow:
 
         self.log = logging.getLogger("Maskflow")
         self.log.setLevel(logging.INFO)
+        self.log.handlers.clear()
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s',
@@ -379,9 +380,16 @@ class Maskflow:
                                                   config.NUM_CLASSES,
                                                   train_bn=config.TRAIN_BN)
 
+            # TODO: I don't think it can work easily with Keras because we use `.fit_generator()`.
+            # See https://github.com/keras-team/keras/blob/b6bb0be10ad84d456bb1cea535a4a922d7f2e2c6/keras/callbacks.py#L865
+            # And https://github.com/keras-team/keras/issues/10472
             #with tf.name_scope('Training_Summaries'):
-            #    bbox_image = tf.image.draw_bounding_boxes(input_image, output_rois)
-            #    tf.summary.image('Input_Image_with_ROIs', bbox_image, max_outputs=10)
+            #    self.summary_tensors = [input_image]
+            #    tf.summary.image('Input_Image', tf.cast(input_image, tf.float32), max_outputs=10)
+            #    true_rois_image = tf.image.draw_bounding_boxes(input_image, input_gt_boxes)
+            #    tf.summary.image('True_ROIs', tf.cast(true_rois_image, tf.float32), max_outputs=10)
+            #    predicted_rois_image = tf.image.draw_bounding_boxes(input_image, output_rois)
+            #    tf.summary.image('Predicted_ROIs', tf.cast(predicted_rois_image, tf.float32), max_outputs=10)
 
             with tf.name_scope('Losses'):
                 # Losses
@@ -669,7 +677,7 @@ class Maskflow:
                                        batch_size=self.config.BATCH_SIZE)
 
         # Callbacks
-        tb = keras.callbacks.TensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=True)
+        tb = keras.callbacks.TensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
         mc = keras.callbacks.ModelCheckpoint(str(self.checkpoint_path), verbose=0, save_weights_only=True)
         callbacks = [tb, mc]
         callbacks += custom_callbacks
@@ -700,6 +708,7 @@ class Maskflow:
             workers=workers,
             use_multiprocessing=True,
         )
+        
         self.epoch = max(self.epoch, epochs)
 
     def _split_as_batches(self, images, config):

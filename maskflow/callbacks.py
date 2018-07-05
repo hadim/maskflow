@@ -96,6 +96,7 @@ class FileLogger(BasicLogger):
         
         self.logger = logging.getLogger(f"FileLogger_{filename.parent}")
         self.logger.setLevel(logging.DEBUG)
+        self.logger.handlers.clear()
 
         handler = logging.handlers.RotatingFileHandler(filename, mode="a", maxBytes=10000000, backupCount=1)
         self.logger.addHandler(handler)
