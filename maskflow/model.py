@@ -369,6 +369,9 @@ class Maskflow:
                                          train_bn=config.TRAIN_BN,
                                          fc_layers_size=config.FPN_CLASSIF_FC_LAYERS_SIZE)
 
+                # TODO: clean up (use tf.identify if necessary)
+                output_rois = KL.Lambda(lambda x: x * 1, name="output_rois")(rois)
+
             with tf.name_scope('Mask_Detection_Layer'):
                 mrcnn_mask = build_fpn_mask_graph(rois, mrcnn_feature_maps,
                                                   input_image_meta,
@@ -376,8 +379,9 @@ class Maskflow:
                                                   config.NUM_CLASSES,
                                                   train_bn=config.TRAIN_BN)
 
-            # TODO: clean up (use tf.identify if necessary)
-            output_rois = KL.Lambda(lambda x: x * 1, name="output_rois")(rois)
+            #with tf.name_scope('Training_Summaries'):
+            #    bbox_image = tf.image.draw_bounding_boxes(input_image, output_rois)
+            #    tf.summary.image('Input_Image_with_ROIs', bbox_image, max_outputs=10)
 
             with tf.name_scope('Losses'):
                 # Losses
@@ -591,9 +595,8 @@ class Maskflow:
         self.keras_model.add_loss(tf.add_n(reg_losses))
 
         # Compile
-        self.keras_model.compile(
-            optimizer=optimizer,
-            loss=[None] * len(self.keras_model.outputs))
+        self.keras_model.compile(optimizer=optimizer,
+                                 loss=[None] * len(self.keras_model.outputs))
 
         # Add metrics for losses
         for name in loss_names:
@@ -666,7 +669,7 @@ class Maskflow:
                                        batch_size=self.config.BATCH_SIZE)
 
         # Callbacks
-        tb = keras.callbacks.TensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
+        tb = keras.callbacks.TensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=True)
         mc = keras.callbacks.ModelCheckpoint(str(self.checkpoint_path), verbose=0, save_weights_only=True)
         callbacks = [tb, mc]
         callbacks += custom_callbacks
