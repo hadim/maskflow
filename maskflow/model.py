@@ -33,7 +33,6 @@ from mrcnn.model import rpn_class_loss_graph
 from mrcnn.model import rpn_bbox_loss_graph
 from mrcnn.model import mrcnn_class_loss_graph
 from mrcnn.model import mrcnn_bbox_loss_graph
-from mrcnn.model import data_generator
 from mrcnn.model import mrcnn_mask_loss_graph
 from mrcnn.model import DetectionLayer
 from mrcnn.model import mold_image
@@ -50,6 +49,7 @@ from mrcnn.utils import download_trained_weights
 from .config import save_parameters
 from . import processing_graph
 from .callbacks import TrainValTensorBoard
+from .data_generator import DataGenerator
 
 
 def load_model(model_dir, config, training_name=None, mode="inference", init_with="coco"):
@@ -671,10 +671,10 @@ class Maskflow:
             layers = layer_regex[layers]
 
         # Data generators
-        train_generator = data_generator(train_dataset, self.config, shuffle=True,
+        train_generator = DataGenerator(train_dataset, self.config, shuffle=True,
                                          augmentation=augmentation,
                                          batch_size=self.config.BATCH_SIZE)
-        val_generator = data_generator(val_dataset, self.config, shuffle=True,
+        val_generator = DataGenerator(val_dataset, self.config, shuffle=True,
                                        batch_size=self.config.BATCH_SIZE)
 
         # Callbacks
