@@ -49,6 +49,7 @@ from mrcnn.utils import download_trained_weights
 
 from .config import save_parameters
 from . import processing_graph
+from .callbacks import TrainValTensorBoard
 
 
 def load_model(model_dir, config, training_name=None, mode="inference", init_with="coco"):
@@ -677,7 +678,7 @@ class Maskflow:
                                        batch_size=self.config.BATCH_SIZE)
 
         # Callbacks
-        tb = keras.callbacks.TensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
+        tb = TrainValTensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
         mc = keras.callbacks.ModelCheckpoint(str(self.checkpoint_path), verbose=0, save_weights_only=True)
         callbacks = [tb, mc]
         callbacks += custom_callbacks

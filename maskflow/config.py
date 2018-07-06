@@ -10,7 +10,7 @@ DEFAULT_PARAMETERS["NAME"] = "Default"
 DEFAULT_PARAMETERS["CLASS_NAMES"] = ["object"]
 
 # Maximum number of ground truth instances in one image
-DEFAULT_PARAMETERS["MAX_OBJECTS"] = 100
+DEFAULT_PARAMETERS["MAX_GT_INSTANCES"] = 100
 
 # Input image resizing
 # Generally, use the "square" resizing mode for training and inferencing

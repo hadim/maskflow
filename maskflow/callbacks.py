@@ -1,3 +1,4 @@
+from pathlib import Path
 import logging
 import os
 
@@ -125,3 +126,43 @@ class TelegramLogger(BasicLogger):
         self.bot = telegram.Bot(token=self.token)
         
         self.print_func = lambda mess: self.bot.send_message(self.chat_id, mess)
+
+        
+class TrainValTensorBoard(tf.keras.callbacks.TensorBoard):
+    
+    def __init__(self, log_dir, **kwargs):
+        
+        self.training_log_dir = Path(log_dir) / "training"
+        self.validation_log_dir = Path(log_dir) / "validation"
+        
+        self.training_log_dir.mkdir(parents=True, exist_ok=True)
+        self.validation_log_dir.mkdir(parents=True, exist_ok=True)
+
+        super().__init__(str(self.training_log_dir), **kwargs)
+
+    def set_model(self, model):
+        # Setup writer for validation metrics
+        self.validation_writer = tf.summary.FileWriter(str(self.validation_log_dir))
+        super().set_model(model)
+
+    def on_epoch_end(self, epoch, logs=None):
+        # Pop the validation logs and handle them separately with
+        # `self.val_writer`. Also rename the keys so that they can
+        # be plotted on the same figure with the training metrics
+        logs = logs or {}
+        val_logs = {k.replace('val_', ''): v for k, v in logs.items() if k.startswith('val_')}
+        for name, value in val_logs.items():
+            summary = tf.Summary()
+            summary_value = summary.value.add()
+            summary_value.simple_value = value.item()
+            summary_value.tag = name
+            self.validation_writer.add_summary(summary, epoch)
+        self.validation_writer.flush()
+
+        # Pass the remaining logs to `TensorBoard.on_epoch_end`
+        logs = {k: v for k, v in logs.items() if not k.startswith('val_')}
+        super().on_epoch_end(epoch, logs)
+
+    def on_train_end(self, logs=None):
+        super().on_train_end(logs)
+        self.validation_writer.close()
