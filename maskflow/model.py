@@ -698,7 +698,7 @@ class Maskflow:
 
         self.keras_model.fit_generator(
             train_generator,
-            initial_epoch=self.epoch - 1,
+            initial_epoch=self.epoch,
             epochs=epochs,
             steps_per_epoch=self.config.STEPS_PER_EPOCH,
             callbacks=callbacks,
