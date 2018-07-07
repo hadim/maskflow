@@ -38,6 +38,7 @@ from mrcnn.model import DetectionLayer
 from mrcnn.model import mold_image
 from mrcnn.model import unmold_image
 from mrcnn.model import compose_image_meta
+from mrcnn.model import data_generator
 
 from mrcnn.utils import generate_pyramid_anchors
 from mrcnn.utils import norm_boxes
@@ -207,7 +208,7 @@ class Maskflow:
 
         self.log.info("Start building Keras model.")
 
-        K.clear_session()
+        #K.clear_session()
 
         # Image size must be dividable by 2 multiple times
         h, w = config.IMAGE_SHAPE[:2]
@@ -668,16 +669,16 @@ class Maskflow:
             layers = layer_regex[layers]
 
         # Data generators
-        train_generator = DataGenerator(train_dataset, self.config, shuffle=True,
+        train_generator = data_generator(train_dataset, self.config, shuffle=True,
                                          augmentation=augmentation,
                                          batch_size=self.config.BATCH_SIZE)
-        val_generator = DataGenerator(val_dataset, self.config, shuffle=True,
+        val_generator = data_generator(val_dataset, self.config, shuffle=True,
                                        batch_size=self.config.BATCH_SIZE)
 
         # Callbacks
         tb = TrainValTensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
         mc = keras.callbacks.ModelCheckpoint(str(self.checkpoint_path), verbose=0, save_weights_only=True)
-        callbacks = [tb, mc]
+        callbacks = [mc]
         callbacks += custom_callbacks
 
         # Train
@@ -694,8 +695,8 @@ class Maskflow:
         else:
             workers = multiprocessing.cpu_count()
 
-        K.get_session().run(tf.global_variables_initializer())
-        K.get_session().run(tf.local_variables_initializer())
+        #K.get_session().run(tf.global_variables_initializer())
+        #K.get_session().run(tf.local_variables_initializer())
             
         self.keras_model.fit_generator(
             train_generator,
