@@ -208,7 +208,7 @@ class Maskflow:
 
         self.log.info("Start building Keras model.")
 
-        #K.clear_session()
+        K.clear_session()
 
         # Image size must be dividable by 2 multiple times
         h, w = config.IMAGE_SHAPE[:2]
@@ -669,23 +669,23 @@ class Maskflow:
             layers = layer_regex[layers]
 
         # Data generators
-        train_generator = data_generator(train_dataset, self.config, shuffle=True,
-                                         augmentation=augmentation,
+        train_generator = DataGenerator(train_dataset, self.config, shuffle=True,
+                                        augmentation=augmentation,
                                          batch_size=self.config.BATCH_SIZE)
-        val_generator = data_generator(val_dataset, self.config, shuffle=True,
-                                       batch_size=self.config.BATCH_SIZE)
-
-        # Callbacks
-        tb = TrainValTensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
-        mc = keras.callbacks.ModelCheckpoint(str(self.checkpoint_path), verbose=0, save_weights_only=True)
-        callbacks = [mc]
-        callbacks += custom_callbacks
+        val_generator = DataGenerator(val_dataset, self.config, shuffle=True,
+                                      batch_size=self.config.BATCH_SIZE)
 
         # Train
         self.log.info(f"Starting at epoch {self.epoch}. Learning Rate={learning_rate}")
         self.log.info(f"Checkpoint Path: {self.checkpoint_path}")
         self._set_trainable(layers)
         self._compile(learning_rate, self.config.LEARNING_MOMENTUM)
+        
+        # Callbacks
+        tb = TrainValTensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
+        mc = keras.callbacks.ModelCheckpoint(str(self.checkpoint_path), verbose=0, save_weights_only=True)
+        callbacks = [tb, mc]
+        callbacks += custom_callbacks
 
         # Work-around for Windows: Keras fails on Windows when using
         # multiprocessing workers. See discussion here:
@@ -694,9 +694,6 @@ class Maskflow:
             workers = 0
         else:
             workers = multiprocessing.cpu_count()
-
-        #K.get_session().run(tf.global_variables_initializer())
-        #K.get_session().run(tf.local_variables_initializer())
             
         self.keras_model.fit_generator(
             train_generator,

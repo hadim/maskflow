@@ -2,10 +2,10 @@ from pathlib import Path
 import logging
 import os
 
+import keras
 import tensorflow as tf
 
-
-class BasicLogger(tf.keras.callbacks.Callback):
+class BasicLogger(keras.callbacks.Callback):
     """Callback that prints metrics to stdout.
     # Arguments
         count_mode: One of "steps" or "samples".
@@ -128,7 +128,7 @@ class TelegramLogger(BasicLogger):
         self.print_func = lambda mess: self.bot.send_message(self.chat_id, mess)
 
         
-class TrainValTensorBoard(tf.keras.callbacks.TensorBoard):
+class TrainValTensorBoard(keras.callbacks.TensorBoard):
     
     def __init__(self, log_dir, **kwargs):
         
