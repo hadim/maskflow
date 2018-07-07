@@ -224,33 +224,28 @@ class Maskflow:
                                         name="input_image_meta")
             if mode == "training":
                 # RPN GT
-                input_rpn_match = KL.Input(
-                    shape=[None, 1], name="input_rpn_match", dtype=tf.int32)
-                input_rpn_bbox = KL.Input(
-                    shape=[None, 4], name="input_rpn_bbox", dtype=tf.float32)
+                input_rpn_match = KL.Input(shape=[None, 1], name="input_rpn_match", dtype=tf.int32)
+                input_rpn_bbox = KL.Input(shape=[None, 4], name="input_rpn_bbox", dtype=tf.float32)
 
                 # Detection GT (class IDs, bounding boxes, and masks)
                 # 1. GT Class IDs (zero padded)
-                input_gt_class_ids = KL.Input(
-                    shape=[None], name="input_gt_class_ids", dtype=tf.int32)
+                input_gt_class_ids = KL.Input(shape=[None], name="input_gt_class_ids", dtype=tf.int32)
+                
                 # 2. GT Boxes in pixels (zero padded)
                 # [batch, MAX_GT_INSTANCES, (y1, x1, y2, x2)] in image coordinates
-                input_gt_boxes = KL.Input(
-                    shape=[None, 4], name="input_gt_boxes", dtype=tf.float32)
+                input_gt_boxes = KL.Input(shape=[None, 4], name="input_gt_boxes", dtype=tf.float32)
+                
                 # Normalize coordinates
-                gt_boxes = KL.Lambda(lambda x: norm_boxes_graph(
-                    x, K.shape(input_image)[1:3]))(input_gt_boxes)
+                gt_boxes = KL.Lambda(lambda x: norm_boxes_graph(x, K.shape(input_image)[1:3]))(input_gt_boxes)
+                
                 # 3. GT Masks (zero padded)
                 # [batch, height, width, MAX_GT_INSTANCES]
                 if config.USE_MINI_MASK:
-                    input_gt_masks = KL.Input(
-                        shape=[config.MINI_MASK_SHAPE[0],
-                               config.MINI_MASK_SHAPE[1], None],
-                        name="input_gt_masks", dtype=bool)
+                    input_gt_masks = KL.Input(shape=[config.MINI_MASK_SHAPE[0], config.MINI_MASK_SHAPE[1], None],
+                                              name="input_gt_masks", dtype=bool)
                 else:
-                    input_gt_masks = KL.Input(
-                        shape=[config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1], None],
-                        name="input_gt_masks", dtype=bool)
+                    input_gt_masks = KL.Input(shape=[config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1], None],
+                                              name="input_gt_masks", dtype=bool)
             elif mode == "inference":
                 # Anchors in normalized coordinates
                 input_anchors = KL.Input(shape=[None, 4], name="input_anchors")
@@ -506,6 +501,7 @@ class Maskflow:
         """
         import h5py
         from keras.engine import saving
+        #from keras.engine import topology as saving
 
         if exclude:
             by_name = True
@@ -619,7 +615,7 @@ class Maskflow:
             self.keras_model.metrics_tensors.append(loss)
 
     def train(self, train_dataset, val_dataset, epochs, layers,
-              augmentation=None, custom_callbacks=[]):
+              augmentation=None, custom_callbacks=[], learning_rate=None):
         """Train the model.
         train_dataset, val_dataset: Training and validation Dataset objects.
         learning_rate: The learning rate to train with
@@ -654,7 +650,8 @@ class Maskflow:
         # Copy params file to log directory
         save_parameters(self.config.params, self.log_dir / "parameters.yml")
 
-        learning_rate = self.config.LEARNING_RATE
+        if not learning_rate:
+            learning_rate = self.config.LEARNING_RATE
 
         # Pre-defined layer regular expressions
         layer_regex = {
@@ -697,6 +694,9 @@ class Maskflow:
         else:
             workers = multiprocessing.cpu_count()
 
+        K.get_session().run(tf.global_variables_initializer())
+        K.get_session().run(tf.local_variables_initializer())
+            
         self.keras_model.fit_generator(
             train_generator,
             initial_epoch=self.epoch,
