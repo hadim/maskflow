@@ -157,7 +157,13 @@ class Maskflow:
                             "which is a subddicrectory of model_dir.")
 
         self._set_log_dir()
-        self.keras_model = self._build_keras_model(self.mode, self.config)
+        
+        # Get the device name of the first detected CPU
+        self.cpu_device_name = list(filter(lambda x: x.device_type == "CPU", K.get_session().list_devices()))[0].name
+        
+        # Needed in case of multi-gpu
+        with tf.device(self.cpu_device_name):
+            self.keras_model = self._build_keras_model(self.mode, self.config)
 
     def _set_log_dir(self):
         """Sets the model log directory and epoch counter.
@@ -197,6 +203,8 @@ class Maskflow:
 
         # Path to save after each epoch. Include placeholders that get filled by Keras.
         self.checkpoint_path = self.log_dir / f"mask_rcnn_{self.config.NAME.lower()}_{{epoch:04d}}.h5"
+        
+        Path(self.log_dir.parent).mkdir(parents=True, exist_ok=True)
 
     def _build_keras_model(self, mode, config):
         """Build Mask R-CNN architecture.
@@ -441,11 +449,6 @@ class Maskflow:
                                  mrcnn_mask, rpn_rois, rpn_class, rpn_bbox],
                              name='mask_rcnn')
 
-        # Add multi-GPU support.
-        if config.GPU_COUNT > 1:
-            from mrcnn.parallel_model import ParallelModel
-            model = ParallelModel(model, config.GPU_COUNT)
-
         self.log.info("Keras model built.")
         return model
 
@@ -523,12 +526,13 @@ class Maskflow:
         if exclude:
             layers = filter(lambda l: l.name not in exclude, layers)
 
-        if by_name:
-            saving.load_weights_from_hdf5_group_by_name(f, layers)
-        else:
-            saving.load_weights_from_hdf5_group(f, layers)
-        if hasattr(f, 'close'):
-            f.close()
+        with tf.device(self.cpu_device_name):
+            if by_name:
+                saving.load_weights_from_hdf5_group_by_name(f, layers)
+            else:
+                saving.load_weights_from_hdf5_group(f, layers)
+            if hasattr(f, 'close'):
+                f.close()
 
         self.log.info("Done loading weights.")
 
@@ -583,26 +587,26 @@ class Maskflow:
         loss_names = ["rpn_class_loss",  "rpn_bbox_loss",
                       "mrcnn_class_loss", "mrcnn_bbox_loss", "mrcnn_mask_loss"]
 
-        for name in loss_names:
-            layer = self.keras_model.get_layer(name)
-            if layer.output in self.keras_model.losses:
-                continue
-            loss = (
-                tf.reduce_mean(layer.output, keepdims=True)
-                * self.config.LOSS_WEIGHTS.get(name, 1.))
-            self.keras_model.add_loss(loss)
+        with tf.device(self.cpu_device_name):
+            for name in loss_names:
+                layer = self.keras_model.get_layer(name)
+                if layer.output in self.keras_model.losses:
+                    continue
+                loss = (
+                    tf.reduce_mean(layer.output, keepdims=True)
+                    * self.config.LOSS_WEIGHTS.get(name, 1.))
+                self.keras_model.add_loss(loss)
 
-        # Add L2 Regularization
-        # Skip gamma and beta weights of batch normalization layers.
-        reg_losses = [
-            keras.regularizers.l2(self.config.WEIGHT_DECAY)(w) / tf.cast(tf.size(w), tf.float32)
-            for w in self.keras_model.trainable_weights
-            if 'gamma' not in w.name and 'beta' not in w.name]
-        self.keras_model.add_loss(tf.add_n(reg_losses))
+            # Add L2 Regularization
+            # Skip gamma and beta weights of batch normalization layers.
+            reg_losses = [
+                keras.regularizers.l2(self.config.WEIGHT_DECAY)(w) / tf.cast(tf.size(w), tf.float32)
+                for w in self.keras_model.trainable_weights
+                if 'gamma' not in w.name and 'beta' not in w.name]
+            self.keras_model.add_loss(tf.add_n(reg_losses))
 
         # Compile
-        self.keras_model.compile(optimizer=optimizer,
-                                 loss=[None] * len(self.keras_model.outputs))
+        self.keras_model.compile(optimizer=optimizer, loss=[None] * len(self.keras_model.outputs))
 
         # Add metrics for losses
         for name in loss_names:
@@ -610,11 +614,15 @@ class Maskflow:
                 continue
             layer = self.keras_model.get_layer(name)
             self.keras_model.metrics_names.append(name)
-            loss = (
-                tf.reduce_mean(layer.output, keepdims=True)
-                * self.config.LOSS_WEIGHTS.get(name, 1.))
+            loss = (tf.reduce_mean(layer.output, keepdims=True) * self.config.LOSS_WEIGHTS.get(name, 1.))
             self.keras_model.metrics_tensors.append(loss)
-
+            
+        # Multi-GPU support.
+        if self.config.GPU_COUNT > 1:
+            return keras.utils.multi_gpu_model(self.keras_model, gpus=self.config.GPU_COUNT)
+        else:
+            return self.keras_model       
+        
     def train(self, train_dataset, val_dataset, epochs, layers,
               augmentation=None, custom_callbacks=[], learning_rate=None):
         """Train the model.
@@ -645,8 +653,7 @@ class Maskflow:
         """
         assert self.mode == "training", "Create model in training mode."
 
-        if not self.log_dir.is_dir():
-            os.makedirs(self.log_dir)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Copy params file to log directory
         save_parameters(self.config.params, self.log_dir / "parameters.yml")
@@ -679,7 +686,8 @@ class Maskflow:
         self.log.info(f"Starting at epoch {self.epoch}. Learning Rate={learning_rate}")
         self.log.info(f"Checkpoint Path: {self.checkpoint_path}")
         self._set_trainable(layers)
-        self._compile(learning_rate, self.config.LEARNING_MOMENTUM)
+        
+        model = self._compile(learning_rate, self.config.LEARNING_MOMENTUM)
         
         # Callbacks
         tb = TrainValTensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
@@ -695,18 +703,16 @@ class Maskflow:
         else:
             workers = multiprocessing.cpu_count()
             
-        self.keras_model.fit_generator(
-            train_generator,
-            initial_epoch=self.epoch,
-            epochs=epochs,
-            steps_per_epoch=self.config.STEPS_PER_EPOCH,
-            callbacks=callbacks,
-            validation_data=val_generator,
-            validation_steps=self.config.VALIDATION_STEPS,
-            max_queue_size=100,
-            workers=workers,
-            use_multiprocessing=True,
-        )
+        model.fit_generator(train_generator,
+                            initial_epoch=self.epoch,
+                            epochs=epochs,
+                            steps_per_epoch=self.config.STEPS_PER_EPOCH,
+                            callbacks=callbacks,
+                            validation_data=val_generator,
+                            validation_steps=self.config.VALIDATION_STEPS,
+                            max_queue_size=100,
+                            workers=workers,
+                            use_multiprocessing=True)
         
         self.epoch = max(self.epoch, epochs)
 
