@@ -614,7 +614,7 @@ class Maskflow:
             self.train_model = self.keras_model       
             
         # Compile
-        self.train_model.compile(optimizer=optimizer, loss=[None] * len(train_model.outputs))
+        self.train_model.compile(optimizer=optimizer, loss=[None] * len(self.train_model.outputs))
 
         # Add metrics for losses
         for name in loss_names:
