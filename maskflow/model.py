@@ -164,6 +164,7 @@ class Maskflow:
         # Needed in case of multi-gpu
         with tf.device(self.cpu_device_name):
             self.keras_model = self._build_keras_model(self.mode, self.config)
+            self.train_model = None
 
     def _set_log_dir(self):
         """Sets the model log directory and epoch counter.
@@ -607,24 +608,22 @@ class Maskflow:
 
         # Multi-GPU support.
         if self.config.GPU_COUNT > 1:
-            train_model = keras.utils.multi_gpu_model(self.keras_model, gpus=self.config.GPU_COUNT,
+            self.train_model = keras.utils.multi_gpu_model(self.keras_model, gpus=self.config.GPU_COUNT,
                                                       cpu_merge=True, cpu_relocation=False)
         else:
-            train_model = self.keras_model       
+            self.train_model = self.keras_model       
             
         # Compile
-        train_model.compile(optimizer=optimizer, loss=[None] * len(train_model.outputs))
+        self.train_model.compile(optimizer=optimizer, loss=[None] * len(train_model.outputs))
 
         # Add metrics for losses
         for name in loss_names:
-            if name in train_model.metrics_names:
+            if name in self.train_model.metrics_names:
                 continue
-            layer = train_model.get_layer(name)
-            train_model.metrics_names.append(name)
+            layer = self.train_model.get_layer(name)
+            self.train_model.metrics_names.append(name)
             loss = (tf.reduce_mean(layer.output, keepdims=True) * self.config.LOSS_WEIGHTS.get(name, 1.))
-            train_model.metrics_tensors.append(loss)
-            
-        return train_model
+            self.train_model.metrics_tensors.append(loss)
             
     def train(self, train_dataset, val_dataset, epochs, layers,
               augmentation=None, custom_callbacks=[], learning_rate=None):
@@ -690,7 +689,8 @@ class Maskflow:
         self.log.info(f"Checkpoint Path: {self.checkpoint_path}")
         self._set_trainable(layers)
         
-        train_model = self._compile(learning_rate, self.config.LEARNING_MOMENTUM)
+        # It will set self.train_model
+        self._compile(learning_rate, self.config.LEARNING_MOMENTUM)
         
         # Callbacks
         tb = TrainValTensorBoard(log_dir=str(self.log_dir), histogram_freq=0, write_graph=True, write_images=False)
@@ -706,16 +706,16 @@ class Maskflow:
         else:
             workers = multiprocessing.cpu_count()
             
-        train_model.fit_generator(train_generator,
-                                  initial_epoch=self.epoch,
-                                  epochs=epochs,
-                                  steps_per_epoch=self.config.STEPS_PER_EPOCH,
-                                  callbacks=callbacks,
-                            validation_data=val_generator,
-                                  validation_steps=self.config.VALIDATION_STEPS,
-                                  max_queue_size=100,
-                                  workers=workers,
-                                  use_multiprocessing=True)
+        self.train_model.fit_generator(train_generator,
+                                       initial_epoch=self.epoch,
+                                       epochs=epochs,
+                                       steps_per_epoch=self.config.STEPS_PER_EPOCH,
+                                       callbacks=callbacks,
+                                       validation_data=val_generator,
+                                       validation_steps=self.config.VALIDATION_STEPS,
+                                       max_queue_size=100,
+                                       workers=workers,
+                                       use_multiprocessing=True)
         
         self.epoch = max(self.epoch, epochs)
 
