@@ -619,7 +619,8 @@ class Maskflow:
             
         # Multi-GPU support.
         if self.config.GPU_COUNT > 1:
-            return keras.utils.multi_gpu_model(self.keras_model, gpus=self.config.GPU_COUNT)
+            return keras.utils.multi_gpu_model(self.keras_model, gpus=self.config.GPU_COUNT,
+                                               cpu_merge=True, cpu_relocation=False)
         else:
             return self.keras_model       
         
