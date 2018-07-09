@@ -38,7 +38,6 @@ from mrcnn.model import DetectionLayer
 from mrcnn.model import mold_image
 from mrcnn.model import unmold_image
 from mrcnn.model import compose_image_meta
-from mrcnn.model import data_generator
 
 from mrcnn.utils import generate_pyramid_anchors
 from mrcnn.utils import norm_boxes
@@ -134,8 +133,8 @@ class Maskflow:
         init_with: "coco", "imagenet" or None
         """
 
-        assert mode in ['training', 'inference']
-
+        assert mode in ['training', 'inference']        
+        
         self.log = logging.getLogger("Maskflow")
         self.log.setLevel(logging.INFO)
         self.log.handlers.clear()
@@ -158,13 +157,7 @@ class Maskflow:
 
         self._set_log_dir()
         
-        # Get the device name of the first detected CPU
-        self.cpu_device_name = list(filter(lambda x: x.device_type == "CPU", K.get_session().list_devices()))[0].name
-        
-        # Needed in case of multi-gpu
-        with tf.device(self.cpu_device_name):
-            self.keras_model = self._build_keras_model(self.mode, self.config)
-            self.train_model = None
+        self.keras_model = self._build_keras_model(self.mode, self.config)
 
     def _set_log_dir(self):
         """Sets the model log directory and epoch counter.
@@ -219,6 +212,9 @@ class Maskflow:
 
         K.clear_session()
 
+        # Fix types
+        config.DETECTION_MAX_INSTANCES = int(config.DETECTION_MAX_INSTANCES)
+        
         # Image size must be dividable by 2 multiple times
         h, w = config.IMAGE_SHAPE[:2]
         if h / 2**6 != int(h / 2**6) or w / 2**6 != int(w / 2**6):
@@ -306,14 +302,15 @@ class Maskflow:
                 # TODO: can this be optimized to avoid duplicating the anchors?
                 anchors = np.broadcast_to(anchors, (config.BATCH_SIZE,) + anchors.shape)
                 # A hack to get around Keras's bad support for constants
-                anchors = KL.Lambda(lambda x: tf.Variable(anchors), name="anchors")(input_image)
+                anchors = KL.Lambda(lambda x: K.variable(anchors), name="anchors")(input_image)
             else:
                 anchors = input_anchors
 
         with tf.name_scope('RPN_Graph'):
             # RPN Model
             rpn = build_rpn_model(config.RPN_ANCHOR_STRIDE,
-                                  len(config.RPN_ANCHOR_RATIOS), config.TOP_DOWN_PYRAMID_SIZE)
+                                  len(config.RPN_ANCHOR_RATIOS),
+                                  config.TOP_DOWN_PYRAMID_SIZE)
 
             # Loop through pyramid layers
             layer_outputs = []  # list of lists
@@ -450,6 +447,11 @@ class Maskflow:
                                  mrcnn_mask, rpn_rois, rpn_class, rpn_bbox],
                              name='mask_rcnn')
 
+        # Add multi-GPU support.
+        if config.GPU_COUNT > 1:
+            from .parallel_model import ParallelModel
+            model = ParallelModel(model, config.GPU_COUNT)
+            
         self.log.info("Keras model built.")
         return model
 
@@ -527,13 +529,12 @@ class Maskflow:
         if exclude:
             layers = filter(lambda l: l.name not in exclude, layers)
 
-        with tf.device(self.cpu_device_name):
-            if by_name:
-                saving.load_weights_from_hdf5_group_by_name(f, layers)
-            else:
-                saving.load_weights_from_hdf5_group(f, layers)
-            if hasattr(f, 'close'):
-                f.close()
+        if by_name:
+            saving.load_weights_from_hdf5_group_by_name(f, layers)
+        else:
+            saving.load_weights_from_hdf5_group(f, layers)
+        if hasattr(f, 'close'):
+            f.close()
 
         self.log.info("Done loading weights.")
 
@@ -588,42 +589,34 @@ class Maskflow:
         loss_names = ["rpn_class_loss",  "rpn_bbox_loss",
                       "mrcnn_class_loss", "mrcnn_bbox_loss", "mrcnn_mask_loss"]
 
-        with tf.device(self.cpu_device_name):
-            for name in loss_names:
-                layer = self.keras_model.get_layer(name)
-                if layer.output in self.keras_model.losses:
-                    continue
-                loss = (
-                    tf.reduce_mean(layer.output, keepdims=True)
-                    * self.config.LOSS_WEIGHTS.get(name, 1.))
-                self.keras_model.add_loss(loss)
+        for name in loss_names:
+            layer = self.keras_model.get_layer(name)
+            if layer.output in self.keras_model.losses:
+                continue
+            loss = (
+                tf.reduce_mean(layer.output, keepdims=True)
+                * self.config.LOSS_WEIGHTS.get(name, 1.))
+            self.keras_model.add_loss(loss)
 
-            # Add L2 Regularization
-            # Skip gamma and beta weights of batch normalization layers.
-            reg_losses = [
-                keras.regularizers.l2(self.config.WEIGHT_DECAY)(w) / tf.cast(tf.size(w), tf.float32)
-                for w in self.keras_model.trainable_weights
-                if 'gamma' not in w.name and 'beta' not in w.name]
-            self.keras_model.add_loss(tf.add_n(reg_losses))
-
-        # Multi-GPU support.
-        if self.config.GPU_COUNT > 1:
-            self.train_model = keras.utils.multi_gpu_model(self.keras_model, gpus=self.config.GPU_COUNT,
-                                                      cpu_merge=True, cpu_relocation=False)
-        else:
-            self.train_model = self.keras_model       
+        # Add L2 Regularization
+        # Skip gamma and beta weights of batch normalization layers.
+        reg_losses = [
+            keras.regularizers.l2(self.config.WEIGHT_DECAY)(w) / tf.cast(tf.size(w), tf.float32)
+            for w in self.keras_model.trainable_weights
+            if 'gamma' not in w.name and 'beta' not in w.name]
+        self.keras_model.add_loss(tf.add_n(reg_losses))      
             
         # Compile
-        self.train_model.compile(optimizer=optimizer, loss=[None] * len(self.train_model.outputs))
+        self.keras_model.compile(optimizer=optimizer, loss=[None] * len(self.keras_model.outputs))
 
         # Add metrics for losses
         for name in loss_names:
-            if name in self.train_model.metrics_names:
+            if name in self.keras_model.metrics_names:
                 continue
-            layer = self.train_model.get_layer(name)
-            self.train_model.metrics_names.append(name)
+            layer = self.keras_model.get_layer(name)
+            self.keras_model.metrics_names.append(name)
             loss = (tf.reduce_mean(layer.output, keepdims=True) * self.config.LOSS_WEIGHTS.get(name, 1.))
-            self.train_model.metrics_tensors.append(loss)
+            self.keras_model.metrics_tensors.append(loss)
             
     def train(self, train_dataset, val_dataset, epochs, layers,
               augmentation=None, custom_callbacks=[], learning_rate=None):
@@ -706,7 +699,7 @@ class Maskflow:
         else:
             workers = multiprocessing.cpu_count()
             
-        self.train_model.fit_generator(train_generator,
+        self.keras_model.fit_generator(train_generator,
                                        initial_epoch=self.epoch,
                                        epochs=epochs,
                                        steps_per_epoch=self.config.STEPS_PER_EPOCH,
