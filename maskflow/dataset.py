@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+import tqdm
+
 import skimage
 import tifffile
 import warnings
@@ -25,7 +27,7 @@ class MaskflowDataset(utils.Dataset):
             self.add_class(source_name, i+1, class_name)
 
         # Add image specifications
-        for i, fname in enumerate(fnames):
+        for i, fname in tqdm.tqdm(enumerate(fnames), total=len(fnames), leave=False):
 
             image_info = {}
             image_info["source"] = source_name
@@ -47,17 +49,12 @@ class MaskflowDataset(utils.Dataset):
         self.prepare()
 
     def load_image(self, image_id):
-
         info = self.image_info[image_id]
         im = tifffile.imread(str(info["path"]))
-
         # Convert to 8bit
         im = skimage.util.img_as_ubyte(im)
-        im = skimage.exposure.rescale_intensity(im)
-
         # Convert to RGB
         im = skimage.color.grey2rgb(im)
-
         return im
 
     def load_mask(self, image_id):

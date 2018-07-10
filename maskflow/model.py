@@ -498,7 +498,8 @@ class Maskflow:
                 download_trained_weights(str(coco_model_path))
 
             self._load_weights(str(coco_model_path), by_name=True,
-                               exclude=["mrcnn_class_logits", "mrcnn_bbox_fc", "mrcnn_bbox", "mrcnn_mask"])
+                               exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                        "mrcnn_bbox", "mrcnn_mask"])
 
     def _load_weights(self, filepath, by_name=False, exclude=None):
         """Modified version of the correspoding Keras function with

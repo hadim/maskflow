@@ -45,6 +45,9 @@ DEFAULT_PARAMETERS["IMAGE_MIN_SCALE"] = 1.0
 # Image mean (RGB)
 DEFAULT_PARAMETERS["MEAN_PIXEL"] = [123.7, 116.8, 103.9]
 
+# Subtract the mean and divide by the standard deviation
+DEFAULT_PARAMETERS["NORMALIZE_IMAGE"] = False
+
 # The strides of each layer of the FPN Pyramid. These values
 # are based on a Resnet101 backbone.
 DEFAULT_PARAMETERS["BACKBONE_STRIDES"] = [4, 8, 16, 32, 64]
