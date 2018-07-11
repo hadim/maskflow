@@ -67,7 +67,7 @@ class MaskflowDataset(utils.Dataset):
         count = mask.shape[-1]
 
         # Handle occlusions
-        handle_occlusion = True
+        handle_occlusion = False
         if handle_occlusion:
             occlusion = np.logical_not(mask[:, :, -1]).astype(np.uint8)
             for i in range(count - 2, -1, -1):
