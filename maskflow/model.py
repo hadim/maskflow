@@ -674,7 +674,7 @@ class Maskflow:
         # Data generators
         train_generator = DataGenerator(train_dataset, self.config, shuffle=True,
                                         augmentation=augmentation,
-                                         batch_size=self.config.BATCH_SIZE)
+                                        batch_size=self.config.BATCH_SIZE)
         val_generator = DataGenerator(val_dataset, self.config, shuffle=True,
                                       batch_size=self.config.BATCH_SIZE)
 
