@@ -1,96 +1,159 @@
-import pandas as pd
+from io import BytesIO
+import tensorflow as tf
 import numpy as np
-
-import tqdm
-
-import skimage
-import tifffile
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module='skimage')
-
-from mrcnn import utils
-from mrcnn import visualize
+from PIL import Image
 
 
-class MaskflowDataset(utils.Dataset):
+def _array_to_png(arr):
+    with BytesIO() as image_bytes:
+        im = Image.fromarray(arr)
+        im.save(image_bytes, format="png")
+        image_bytes = image_bytes.getvalue()
+    return image_bytes
 
-    def set_dataset(self, fnames, class_names):
-        """
-        :fnames: a list of Python pathlib.Path objects.
-        :class_names: a list of str.
-        """
 
-        source_name = ""
+def _mask_to_indices(mask):
+    return np.argwhere(mask == 1)
 
-        # Add classes
-        for i, class_name in enumerate(class_names):
-            self.add_class(source_name, i+1, class_name)
 
-        # Add image specifications
-        for i, fname in tqdm.tqdm(enumerate(fnames), total=len(fnames), leave=False):
+def _int64_feature(value):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
-            image_info = {}
-            image_info["source"] = source_name
-            image_info["image_id"] = i
-            image_info["path"] = fname
 
-            mask_path = fname.parent.parent / "Mask" / fname.name
-            image_info["mask_path"] = mask_path
+def _bytes_feature(value):
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-            class_ids_path = fname.parent.parent / "Class" / fname.with_suffix(".csv").name
-            image_info["class_ids_path"] = class_ids_path
 
-            assert fname.is_file(), f"Image file {fname} doesn't exist."
-            assert mask_path.is_file(), f"Mask image file {mask_path} doesn't exist."
-            assert class_ids_path.is_file(), f"Class ids image file {class_ids_path} doesn't exist."
+def _int64_list_feature(value):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
-            self.add_image(**image_info)
 
-        self.prepare()
+def create_tf_example(i, basename, image, mask, class_ids):
+    features = {"image/id": _int64_feature(i),
+                "image/basename": _bytes_feature(basename.encode("utf-8")),
+                "image/width": _int64_feature(image.shape[0]),
+                "image/height": _int64_feature(image.shape[1]),
+                "image/channel": _int64_feature(image.shape[2]),
+                "image/n_objects": _int64_feature(mask.shape[0]),
+                "image/image_bytes": _bytes_feature(_array_to_png(image)),
+                "image/masks_indices": _int64_list_feature(_mask_to_indices(mask).flatten()),
+                "image/class_ids": _int64_list_feature(class_ids)}
+    
+    return tf.train.Example(features=tf.train.Features(feature=features))
 
-    def load_image(self, image_id):
-        info = self.image_info[image_id]
-        im = tifffile.imread(str(info["path"]))
-        # Convert to 8bit
-        im = skimage.util.img_as_ubyte(im)
-        # Convert to RGB
-        im = skimage.color.grey2rgb(im)
-        return im
 
-    def load_mask(self, image_id):
+def decode_tfrecord(serialized_example):
+    """Parses features and labels from the given `serialized_example`."""
+    features_map = {"image/id": tf.FixedLenFeature([], tf.int64),
+                    "image/basename": tf.FixedLenFeature([], tf.string),
+                    "image/width": tf.FixedLenFeature([], tf.int64),
+                    "image/height": tf.FixedLenFeature([], tf.int64),
+                    "image/channel": tf.FixedLenFeature([], tf.int64),
+                    "image/n_objects": tf.FixedLenFeature([], tf.int64),
+                    "image/image_bytes": tf.FixedLenFeature([], tf.string),
+                    "image/masks_indices": tf.VarLenFeature(tf.int64),
+                    "image/class_ids": tf.VarLenFeature(tf.int64)}
 
-        info = self.image_info[image_id]
+    features = tf.parse_single_example(serialized_example, features_map)
 
-        # Open masks
-        mask = tifffile.imread(str(info["mask_path"]))
-        #mask = np.swapaxes(mask, 2, 0)
-        count = mask.shape[-1]
+    # Decode the image (we assume PNG)
+    image = tf.image.decode_png(features["image/image_bytes"])
+    
+    # Decode
+    class_ids = tf.cast(features['image/class_ids'], tf.int64)
+    class_ids = tf.sparse_tensor_to_dense(class_ids)
+    
+    # Reconstruct the mask indices.
+    masks_indices = features['image/masks_indices']
+    masks_indices = tf.sparse_tensor_to_dense(masks_indices)
+    masks_indices = tf.reshape(masks_indices, (-1, 3))
 
-        # Handle occlusions
-        handle_occlusion = False
-        if handle_occlusion:
-            occlusion = np.logical_not(mask[:, :, -1]).astype(np.uint8)
-            for i in range(count - 2, -1, -1):
-                mask[:, :, i] = mask[:, :, i] * occlusion
-                occlusion = np.logical_and(occlusion, np.logical_not(mask[:, :, i]))
+    # Convert the list of mask indices to a mask tensor.
+    mask_shape = (features["image/n_objects"], features["image/width"], features["image/height"])
+    masks = tf.sparse_to_dense(masks_indices, output_shape=mask_shape, sparse_values=1)
 
-        # Open class ids file.
-        class_ids = pd.read_csv(info["class_ids_path"], header=None).values[:, 0]
+    labels_dict = {"masks": masks, "class_ids": class_ids, "image_id": features['image/id']}
+    
+    return image, labels_dict
 
-        return mask.astype(np.bool), class_ids.astype(np.int32)
 
-    def random_display(self, n=4, n_class=4):
-        # Load and display random samples
-        image_ids = np.random.choice(self.image_ids, n, replace=True)
+def build_dataset(tfrecord_path, batch_size, num_epochs=None, shuffle=True, functions=None):
+    """Reads input data num_epochs times.
+    
+    # Parameters
+    tfrecord_path : str or Path
+        Path of the TFRecord file.
+    batch_size : int
+        Number of examples per returned batch.
+    num_epochs : int
+        Number of times to read the input data, or None to train forever.
+    shuffle : bool
+        Shuffle data or not. Use during training, disable during evaluation.
+    functions : list
+        A list of Python functions to apply to the dataset.
 
-        for image_id in image_ids:
-            print(self.image_info[image_id])
-            image = self.load_image(image_id)
-            mask, class_ids = self.load_mask(image_id)
-            visualize.display_top_masks(image, mask, class_ids, self.class_names, limit=n_class)
+    # Returns
+        A tuple (features, labels) where each element is a map.
+    """
 
-    def load(self, image_id):
-        image = self.load_image(image_id)
-        mask, class_ids = self.load_mask(image_id)
-        bbox = utils.extract_bboxes(mask)
-        return image, {"masks": mask, "class_ids": class_ids, "rois": bbox}
+    with tf.name_scope('input'):
+        # TFRecordDataset opens a binary file and reads one record at a time.
+        # `filename` could also be a list of filenames, which will be read in order.
+        dataset = tf.data.TFRecordDataset(str(tfrecord_path))
+
+        # The map transformation takes a function and applies it to every element
+        # of the dataset.
+        dataset = dataset.map(decode_tfrecord)
+        
+        if functions:
+            for func in functions:
+                dataset = dataset.map(func)
+
+        # The shuffle transformation uses a finite-sized buffer to shuffle elements
+        # in memory. The parameter is the number of elements in the buffer. For
+        # completely uniform shuffling, set the parameter to be the same as the
+        # number of elements in the dataset.
+        if shuffle:
+            dataset = dataset.shuffle(1000 + 3 * batch_size)
+
+        dataset = dataset.repeat(num_epochs)
+        
+        # When batching with pad the data if needed with the `0` value.
+        padded_shapes = ([None, None, None],
+                         {"class_ids": [None],
+                          "masks": [None, None, None],
+                          "image_id": []})
+        dataset = dataset.padded_batch(batch_size, padded_shapes=padded_shapes)
+
+    return dataset
+
+
+def get_data(tfrecord_path, n, shuffle=True, functions=None):
+    """Get the data as Numpy array from a TFRecord file.
+    
+    # Parameters
+    tfrecord_path : str or Path
+        Path of the TFRecord file.
+    n : int
+        How many datum to get.
+    shuffle : bool
+        Shuffle the dataset or not.
+    functions : list
+        A list of Python functions to apply to the dataset.
+
+    # Returns
+        A tuple (features, labels) where each element is a map.
+    """
+    
+    dataset = build_dataset(tfrecord_path, batch_size=n, num_epochs=1, shuffle=shuffle, functions=functions)
+    iterator = dataset.make_one_shot_iterator()
+
+    if not tf.executing_eagerly():
+        with tf.Session() as sess:
+            return sess.run(iterator.get_next())
+    else:
+        images, annotations = iterator.get_next()
+        labels_dict = {"masks": annotations["masks"].numpy(),
+                       "class_ids": annotations["class_ids"].numpy(),
+                       "image_id": annotations["image_id"].numpy()}
+        return images.numpy(), labels_dict

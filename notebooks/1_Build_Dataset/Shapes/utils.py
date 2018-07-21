@@ -79,7 +79,7 @@ def random_shape(height, width, class_names):
     return shape, color, (x, y, s)
 
 
-def random_image( height, width, max_n, class_names):
+def random_image(height, width, max_n, class_names):
     """Creates random specifications of an image with multiple shapes.
     Returns the background color of the image and a list of shape
     specifications that can be used to draw the image.
@@ -147,4 +147,8 @@ def generate_mask(bg_color, height, width, shapes, class_names):
     # Map class names to class IDs.
     # +1 because 0 is background
     class_ids = np.array([class_names.index(s[0]) + 1 for s in shapes])
+    
+    mask = mask.swapaxes(0, 2)
+    mask = mask.swapaxes(1, 2)
+    
     return mask, class_ids.astype(np.int32)
