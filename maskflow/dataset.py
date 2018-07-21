@@ -29,11 +29,13 @@ def _int64_list_feature(value):
 
 
 def create_tf_example(i, basename, image, mask, class_ids):
+    
+    n_channel = image.shape[2] if len(image.shape) == 3 else 1
+    
     features = {"image/id": _int64_feature(i),
                 "image/basename": _bytes_feature(basename.encode("utf-8")),
                 "image/width": _int64_feature(image.shape[0]),
                 "image/height": _int64_feature(image.shape[1]),
-                "image/channel": _int64_feature(image.shape[2]),
                 "image/n_objects": _int64_feature(mask.shape[0]),
                 "image/image_bytes": _bytes_feature(_array_to_png(image)),
                 "image/masks_indices": _int64_list_feature(_mask_to_indices(mask).flatten()),
@@ -48,7 +50,6 @@ def decode_tfrecord(serialized_example):
                     "image/basename": tf.FixedLenFeature([], tf.string),
                     "image/width": tf.FixedLenFeature([], tf.int64),
                     "image/height": tf.FixedLenFeature([], tf.int64),
-                    "image/channel": tf.FixedLenFeature([], tf.int64),
                     "image/n_objects": tf.FixedLenFeature([], tf.int64),
                     "image/image_bytes": tf.FixedLenFeature([], tf.string),
                     "image/masks_indices": tf.VarLenFeature(tf.int64),
@@ -58,6 +59,10 @@ def decode_tfrecord(serialized_example):
 
     # Decode the image (we assume PNG)
     image = tf.image.decode_png(features["image/image_bytes"])
+    
+    if image.ndim == 2:
+        image = tf.expand_dims(image, axis=-1)
+        image = tf.tile(image, [1, 1, 3])
     
     # Decode
     class_ids = tf.cast(features['image/class_ids'], tf.int64)

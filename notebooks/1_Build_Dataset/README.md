@@ -20,8 +20,6 @@ Here is the the features map used to format TFRecord elements:
 "image/width": tf.FixedLenFeature([], tf.int64),
 # The height of the image (H).
 "image/height": tf.FixedLenFeature([], tf.int64),
-# The number of channels of the image.
-"image/channel": tf.FixedLenFeature([], tf.int64),
 # The number of objects in the image (N).
 "image/n_objects": tf.FixedLenFeature([], tf.int64),
 # The image bytes as PNG.
