@@ -60,7 +60,8 @@ def decode_tfrecord(serialized_example):
     # Decode the image (we assume PNG)
     image = tf.image.decode_png(features["image/image_bytes"])
     
-    if image.ndim == 2:
+    if image.get_shape().ndims == 2:
+        print("ssss")
         image = tf.expand_dims(image, axis=-1)
         image = tf.tile(image, [1, 1, 3])
     
@@ -105,7 +106,14 @@ def build_dataset(tfrecord_path, batch_size, num_epochs=None, shuffle=True, func
         # TFRecordDataset opens a binary file and reads one record at a time.
         # `filename` could also be a list of filenames, which will be read in order.
         dataset = tf.data.TFRecordDataset(str(tfrecord_path))
-
+        
+        # The shuffle transformation uses a finite-sized buffer to shuffle elements
+        # in memory. The parameter is the number of elements in the buffer. For
+        # completely uniform shuffling, set the parameter to be the same as the
+        # number of elements in the dataset.
+        if shuffle:
+            dataset = dataset.shuffle(1000 + 3 * batch_size)
+            
         # The map transformation takes a function and applies it to every element
         # of the dataset.
         dataset = dataset.map(decode_tfrecord)
@@ -113,14 +121,7 @@ def build_dataset(tfrecord_path, batch_size, num_epochs=None, shuffle=True, func
         if functions:
             for func in functions:
                 dataset = dataset.map(func)
-
-        # The shuffle transformation uses a finite-sized buffer to shuffle elements
-        # in memory. The parameter is the number of elements in the buffer. For
-        # completely uniform shuffling, set the parameter to be the same as the
-        # number of elements in the dataset.
-        if shuffle:
-            dataset = dataset.shuffle(1000 + 3 * batch_size)
-
+                
         dataset = dataset.repeat(num_epochs)
         
         # When batching with pad the data if needed with the `0` value.
