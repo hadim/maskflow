@@ -11,29 +11,29 @@ For an example, you can check the [Shapes dataset](./Shapes/Shapes.ipynb).
 Here is the the features map used to format TFRecord elements:
 
 ```python
-features_map = {
-                # An integer that identify the image.
-                "image/id": tf.FixedLenFeature([], tf.int64),
-                # The name of the image.
-                "image/basename": tf.FixedLenFeature([], tf.string),
-                # The width of the image (W).
-                "image/width": tf.FixedLenFeature([], tf.int64),
-                # The height of the image (H).
-                "image/height": tf.FixedLenFeature([], tf.int64),
-                # The number of channels of the image.
-                "image/channel": tf.FixedLenFeature([], tf.int64),
-                # The number of objects in the image (N).
-                "image/n_objects": tf.FixedLenFeature([], tf.int64),
-                # The image bytes as PNG.
-                "image/image_bytes": tf.FixedLenFeature([], tf.string),
-                # A sparse format of the mask array representing the indices of positive pixels.
-                # A 1D array that is reshaped to [-1, 3], and then used by tf.sparse_tensor_to_dense(),
-                # to reconsitute the mask array with the following shape [N, W, H].
-                "image/masks_indices": tf.VarLenFeature(tf.int64),
-                # The class indices of the objects: [N, ]. The order of the objects need to be the same
-                # as for "image/masks_indices" once reconstituted by tf.sparse_tensor_to_dense().
-                "image/class_ids": tf.VarLenFeature(tf.int64)
-               }
+{
+# An integer that identify the image.
+"image/id": tf.FixedLenFeature([], tf.int64),
+# The name of the image.
+"image/basename": tf.FixedLenFeature([], tf.string),
+# The width of the image (W).
+"image/width": tf.FixedLenFeature([], tf.int64),
+# The height of the image (H).
+"image/height": tf.FixedLenFeature([], tf.int64),
+# The number of channels of the image.
+"image/channel": tf.FixedLenFeature([], tf.int64),
+# The number of objects in the image (N).
+"image/n_objects": tf.FixedLenFeature([], tf.int64),
+# The image bytes as PNG.
+"image/image_bytes": tf.FixedLenFeature([], tf.string),
+# A sparse format of the mask array representing the indices of positive pixels.
+# A 1D array that is reshaped to [-1, 3], and then used by tf.sparse_tensor_to_dense(),
+# to reconsitute the mask array with the following shape [N, W, H].
+"image/masks_indices": tf.VarLenFeature(tf.int64),
+# The class indices of the objects: [N, ]. The order of the objects need to be the same
+# as for "image/masks_indices" once reconstituted by tf.sparse_tensor_to_dense().
+"image/class_ids": tf.VarLenFeature(tf.int64)
+}
 ```
 
 ## tf.data.Dataset
