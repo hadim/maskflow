@@ -75,7 +75,7 @@ def random_shape(height, width, class_names):
     y = np.random.randint(buffer, height - buffer - 1)
     x = np.random.randint(buffer, width - buffer - 1)
     # Size
-    s = np.random.randint(buffer, height // 4)
+    s = np.random.randint(2, height // 10)
     return shape, color, (x, y, s)
 
 
@@ -118,6 +118,8 @@ def draw_shape(image, shape, dims, color):
                             (x + s / np.sin(np.radians(60)), y + s),
                             ]], dtype=np.int32)
         image = cv2.fillPoly(image, points, color)
+    else:
+        raise Exception(f"Wrong shape name {shape}")
     return image
 
 
