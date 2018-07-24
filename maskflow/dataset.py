@@ -13,7 +13,7 @@ def _array_to_png(arr):
 
 
 def _mask_to_indices(mask):
-    return np.argwhere(mask == 1)
+    return np.argwhere(mask == mask.max())
 
 
 def _int64_feature(value):
