@@ -59,9 +59,8 @@ def decode_tfrecord(serialized_example):
 
     # Decode the image (we assume PNG)
     image = tf.image.decode_png(features["image/image_bytes"])
-    
+
     if image.get_shape().ndims == 2:
-        print("ssss")
         image = tf.expand_dims(image, axis=-1)
         image = tf.tile(image, [1, 1, 3])
     
