@@ -5,7 +5,7 @@ import os
 import zipfile
 
 
-class TqdmUpTo(tqdm.tqdm):
+class _TqdmUpTo(tqdm.tqdm):
     """Alternative Class-based version of the above.
     Provides `update_to(n)` which uses `tqdm.update(delta_n)`.
     Inspired by [twine#242](https://github.com/pypa/twine/pull/242),
@@ -14,12 +14,13 @@ class TqdmUpTo(tqdm.tqdm):
 
     def update_to(self, b=1, bsize=1, tsize=None):
         """
-        b  : int, optional
-            Number of blocks transferred so far [default: 1].
-        bsize  : int, optional
-            Size of each block (in tqdm units) [default: 1].
-        tsize  : int, optional
-            Total size (in tqdm units). If [default: None] remains unchanged.
+        Args:
+            b: int, optional
+                Number of blocks transferred so far [default: 1].
+            bsize: int, optional
+                Size of each block (in tqdm units) [default: 1].
+            tsize: int, optional
+                Total size (in tqdm units). If [default: None] remains unchanged.
         """
         if tsize is not None:
             self.total = tsize
@@ -27,9 +28,15 @@ class TqdmUpTo(tqdm.tqdm):
 
         
 def download_zip(zip_url, extract_folder_path):
+    """Download a ZIP file from an URL and extract to a given local folder.
+    
+    Args:
+        zip_url: The URL to the ZIP file as a str.
+        extract_folder_path: The path to the local folder for the extraction.
+    """
     temp_path = tempfile.mktemp(suffix=".zip")
 
-    with TqdmUpTo(unit='B', unit_scale=True, unit_divisor=1024, miniters=1) as t:
+    with _TqdmUpTo(unit='B', unit_scale=True, unit_divisor=1024, miniters=1) as t:
         urllib.request.urlretrieve(zip_url, filename=temp_path, reporthook=t.update_to, data=None)
 
     with zipfile.ZipFile(temp_path) as zf:

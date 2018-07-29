@@ -1,8 +1,23 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def display_top_masks(image, mask, class_ids, class_names, basesize=14, limit=4, cmap="Blues_r"):
-    """Display the given images and the top few class masks."""
+    """Display the given images and the top few class masks.
+    
+    Args:
+        image: The image as an array of shape (W, H, C).
+        mask: The instance masks of the different objects of shape (N, W, H)
+              where N is the number of objects.
+        class_ids: The class IDs of the instance masks in the same order as `mask` of shape (N,).
+        class_names: The name of the classes. Class 0 is assumed to be background.
+        basesize: Base size of the figure.
+        limit: Limit of masks to show.
+        cmap: Optional. Color map to use. For example, "Blues".
+        
+    Returns:
+        The image as a Matplotlib figure.
+    """
     
     to_display = []
     titles = []
@@ -40,12 +55,17 @@ def display_top_masks(image, mask, class_ids, class_names, basesize=14, limit=4,
     
 def display_images(images, titles=None, cols=4, basesize=14, cmap=None, norm=None, interpolation=None):
     """Display the given set of images, optionally with titles.
-    images: list or array of image tensors in HWC format.
-    titles: optional. A list of titles to display with each image.
-    cols: number of images per row
-    cmap: Optional. Color map to use. For example, "Blues".
-    norm: Optional. A Normalize instance to map values to colors.
-    interpolation: Optional. Image interpolation to use for display.
+    
+    Args:
+        images: list or array of image tensors in HWC format.
+        titles: optional. A list of titles to display with each image.
+        cols: number of images per row
+        cmap: Optional. Color map to use. For example, "Blues".
+        norm: Optional. A Normalize instance to map values to colors.
+        interpolation: Optional. Image interpolation to use for display.
+        
+    Returns:
+        The image as a Matplotlib figure.
     """
     titles = titles if titles is not None else [""] * len(images)
     rows = len(images) // cols
@@ -58,5 +78,9 @@ def display_images(images, titles=None, cols=4, basesize=14, cmap=None, norm=Non
 
 
 def batch_display_top_masks(images, masks, class_ids, class_names, basesize=14, limit=4, cmap="Blues_r"):
+    """Display the given images and the top few class masks.
+    
+    See `maskflow.display_top_masks`.
+    """
     for image, mask, single_class_ids in zip(images, masks, class_ids):
         display_top_masks(image, mask, single_class_ids, class_names, basesize=basesize, limit=limit, cmap=cmap)

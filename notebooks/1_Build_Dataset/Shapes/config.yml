@@ -1,4 +1,4 @@
-# See `maskflow/config.py` for details about parameters.
+# See `maskflow/config.yml` for details about parameters.
 
 NAME: "Shapes Detector"
 CLASS_NAMES: ["square", "circle", "triangle"]

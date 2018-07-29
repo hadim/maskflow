@@ -25,6 +25,7 @@ dependencies:
   - joblib
   - read-roi
   - pytables
+  - importlib_resources
   - pip:
     - keras
     - imgaug

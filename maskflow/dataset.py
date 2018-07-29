@@ -29,6 +29,20 @@ def _int64_list_feature(value):
 
 
 def create_tf_example(i, basename, image, mask, class_ids):
+    """Create a tf.train.Example object to be stored in a TFRecord file.
+    
+    Args:
+        i: The ID of the image (int).
+        basename: The name of the image (str).
+        image: The image as an array of shape (W, H, C).
+        mask: The instance masks of the different objects of shape (N, W, H)
+              where N is the number of objects.
+        class_ids: The class IDs of the instance masks in the same order as `mask` of shape (N,).
+
+    Returns:
+        A `tf.train.Example` object.
+    
+    """
     
     n_channel = image.shape[2] if len(image.shape) == 3 else 1
     
@@ -83,21 +97,16 @@ def decode_tfrecord(serialized_example):
 
 
 def build_dataset(tfrecord_path, batch_size, num_epochs=None, shuffle=True, functions=None):
-    """Reads input data num_epochs times.
+    """Build a `tf.data.Dataset` from the Maskflow TFRecord file.
     
-    # Parameters
-    tfrecord_path : str or Path
-        Path of the TFRecord file.
-    batch_size : int
-        Number of examples per returned batch.
-    num_epochs : int
-        Number of times to read the input data, or None to train forever.
-    shuffle : bool
-        Shuffle data or not. Use during training, disable during evaluation.
-    functions : list
-        A list of Python functions to apply to the dataset.
+    Args:
+        tfrecord_path: str or Path. Path of the TFRecord file.
+        batch_size: Number of examples per returned batch (int).
+        num_epochs: Number of times to read the input data, or None to train forever (int).
+        shuffle: Shuffle data or not. Use during training, disable during evaluation (bool).
+        functions: A list of Python functions to apply to the dataset (list).
 
-    # Returns
+    Returns:
         A tuple (features, labels) where each element is a map.
     """
 
@@ -134,19 +143,15 @@ def build_dataset(tfrecord_path, batch_size, num_epochs=None, shuffle=True, func
 
 
 def get_data(tfrecord_path, n, shuffle=True, functions=None):
-    """Get the data as Numpy array from a TFRecord file.
+    """Get the data as Numpy array from a Maskflow TFRecord file.
     
-    # Parameters
-    tfrecord_path : str or Path
-        Path of the TFRecord file.
-    n : int
-        How many datum to get.
-    shuffle : bool
-        Shuffle the dataset or not.
-    functions : list
-        A list of Python functions to apply to the dataset.
+    Args:
+        tfrecord_path: Path of the TFRecord file (str or Path).
+        n: How many datum to get (int).
+        shuffle: Shuffle the dataset or not (bool).
+        functions: A list of Python functions to apply to the dataset (list).
 
-    # Returns
+    Returns:
         A tuple (features, labels) where each element is a map.
     """
     
