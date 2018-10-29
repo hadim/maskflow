@@ -1,169 +1,89 @@
-from io import BytesIO
-import tensorflow as tf
-import numpy as np
-from PIL import Image
+import datetime
+from pathlib import Path
+import copy
+import random
+import json
+
+from maskrcnn_benchmark.config import cfg
+from maskrcnn_benchmark.data import make_data_loader
+
+from .cococreator import create_image_info
+from .cococreator import create_annotation_info
 
 
-def _array_to_png(arr):
-    with BytesIO() as image_bytes:
-        im = Image.fromarray(arr)
-        im.save(image_bytes, format="png")
-        image_bytes = image_bytes.getvalue()
-    return image_bytes
+class DatasetCatalog:
+    DATASETS = {
+        "train_dataset": {
+            "root": "train_dataset",
+            "ann_file": "train_annotations.json",
+        },
+        "test_dataset": {
+            "root": "test_dataset",
+            "ann_file": "test_annotations.json",
+        },
+    }
+
+    @staticmethod
+    def get(name):
+        data_dir = cfg["DATA_DIR"]
+        if data_dir is None:
+            raise Exception("You need to set `config['DATA_DIR']")
+        attrs = DatasetCatalog.DATASETS[name]
+        args = dict(root=Path(data_dir) / attrs["root"],
+                    ann_file=Path(data_dir) / attrs["ann_file"])
+        return dict(factory="COCODataset", args=args)
 
 
-def _mask_to_indices(mask):
-    return np.argwhere(mask == mask.max())
+def get_data_loader(config, data_dir, is_train=True):
+    config['DATA_DIR'] = data_dir
+    data_loader = make_data_loader(config, is_train=is_train)
+    data_loader = data_loader[0] if isinstance(data_loader, list) else data_loader
+    return data_loader
+  
 
-
-def _int64_feature(value):
-    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
-
-
-def _bytes_feature(value):
-    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
-
-
-def _int64_list_feature(value):
-    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
-
-
-def create_tf_example(i, basename, image, mask, class_ids):
-    """Create a tf.train.Example object to be stored in a TFRecord file.
+def get_base_annotations(class_names, supercategory=""):
     
-    Args:
-        i: The ID of the image (int).
-        basename: The name of the image (str).
-        image: The image as an array of shape (W, H, C).
-        mask: The instance masks of the different objects of shape (N, W, H)
-              where N is the number of objects.
-        class_ids: The class IDs of the instance masks in the same order as `mask` of shape (N,).
-
-    Returns:
-        A `tf.train.Example` object.
+    categories = get_categories(class_names, supercategory=supercategory)
     
-    """
+    base_annotations = {
+        "info": {"description": "Toy Shapes Dataset",
+                 "url": "https://github.com/hadim/maskflow",
+                 "version": "0.1.0",
+                 "year": 2018,
+                 "contributor": "hadim",
+                 "date_created": datetime.datetime.utcnow().isoformat(' ')
+                },
+        "licenses": {"id": 1,
+                     "name": "Attribution-NonCommercial-ShareAlike License",
+                     "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+                    },
+        "categories": categories,
+        "images": [],
+        "annotations": []
+    }
+    return copy.deepcopy(base_annotations)
+  
+
+def get_categories(class_names, supercategory=""):
+    return [dict(id=i+1, name=name, supercategory=supercategory) for i, name in enumerate(class_names)]
+
+
+def get_annotations(image_id, basename, image, mask, class_ids):
+    image_info = create_image_info(image_id, basename, image.shape)
     
-    n_channel = image.shape[2] if len(image.shape) == 3 else 1
-    
-    features = {"image/id": _int64_feature(i),
-                "image/basename": _bytes_feature(basename.encode("utf-8")),
-                "image/width": _int64_feature(image.shape[0]),
-                "image/height": _int64_feature(image.shape[1]),
-                "image/n_objects": _int64_feature(mask.shape[0]),
-                "image/image_bytes": _bytes_feature(_array_to_png(image)),
-                "image/masks_indices": _int64_list_feature(_mask_to_indices(mask).flatten()),
-                "image/class_ids": _int64_list_feature(class_ids)}
-    
-    return tf.train.Example(features=tf.train.Features(feature=features))
-
-
-def decode_tfrecord(serialized_example):
-    """Parses features and labels from the given `serialized_example`."""
-    features_map = {"image/id": tf.FixedLenFeature([], tf.int64),
-                    "image/basename": tf.FixedLenFeature([], tf.string),
-                    "image/width": tf.FixedLenFeature([], tf.int64),
-                    "image/height": tf.FixedLenFeature([], tf.int64),
-                    "image/n_objects": tf.FixedLenFeature([], tf.int64),
-                    "image/image_bytes": tf.FixedLenFeature([], tf.string),
-                    "image/masks_indices": tf.VarLenFeature(tf.int64),
-                    "image/class_ids": tf.VarLenFeature(tf.int64)}
-
-    features = tf.parse_single_example(serialized_example, features_map)
-
-    # Decode the image (we assume PNG)
-    image = tf.image.decode_png(features["image/image_bytes"])
-
-    if image.get_shape().ndims == 2:
-        image = tf.expand_dims(image, axis=-1)
-        image = tf.tile(image, [1, 1, 3])
-    
-    # Decode
-    class_ids = tf.cast(features['image/class_ids'], tf.int64)
-    class_ids = tf.sparse_tensor_to_dense(class_ids)
-    
-    # Reconstruct the mask indices.
-    masks_indices = features['image/masks_indices']
-    masks_indices = tf.sparse_tensor_to_dense(masks_indices)
-    masks_indices = tf.reshape(masks_indices, (-1, 3))
-
-    # Convert the list of mask indices to a mask tensor.
-    mask_shape = (features["image/n_objects"], features["image/width"], features["image/height"])
-    masks = tf.sparse_to_dense(masks_indices, output_shape=mask_shape, sparse_values=1)
-
-    labels_dict = {"masks": masks, "class_ids": class_ids, "image_id": features['image/id']}
-    
-    return image, labels_dict
-
-
-def build_dataset(tfrecord_path, batch_size, num_epochs=None, shuffle=True, functions=None):
-    """Build a `tf.data.Dataset` from the Maskflow TFRecord file.
-    
-    Args:
-        tfrecord_path: str or Path. Path of the TFRecord file.
-        batch_size: Number of examples per returned batch (int).
-        num_epochs: Number of times to read the input data, or None to train forever (int).
-        shuffle: Shuffle data or not. Use during training, disable during evaluation (bool).
-        functions: A list of Python functions to apply to the dataset (list).
-
-    Returns:
-        A tuple (features, labels) where each element is a map.
-    """
-
-    with tf.name_scope('input'):
-        # TFRecordDataset opens a binary file and reads one record at a time.
-        # `filename` could also be a list of filenames, which will be read in order.
-        dataset = tf.data.TFRecordDataset(str(tfrecord_path))
+    image_annotations = []
+    for binary_mask, class_id in zip(mask, class_ids):
+        category_info = {'id': int(class_id), 'is_crowd': False}
         
-        # The shuffle transformation uses a finite-sized buffer to shuffle elements
-        # in memory. The parameter is the number of elements in the buffer. For
-        # completely uniform shuffling, set the parameter to be the same as the
-        # number of elements in the dataset.
-        if shuffle:
-            dataset = dataset.shuffle(1000 + 3 * batch_size)
+        annotation_info = create_annotation_info(
+            random.getrandbits(24), image_id, category_info, binary_mask,
+            image.shape[:-1], tolerance=0)
+        if annotation_info:
+            image_annotations.append(annotation_info)
             
-        # The map transformation takes a function and applies it to every element
-        # of the dataset.
-        dataset = dataset.map(decode_tfrecord)
-        
-        if functions:
-            for func in functions:
-                dataset = dataset.map(func)
-                
-        dataset = dataset.repeat(num_epochs)
-        
-        # When batching with pad the data if needed with the `0` value.
-        padded_shapes = ([None, None, None],
-                         {"class_ids": [None],
-                          "masks": [None, None, None],
-                          "image_id": []})
-        dataset = dataset.padded_batch(batch_size, padded_shapes=padded_shapes)
-
-    return dataset
-
-
-def get_data(tfrecord_path, n, shuffle=True, functions=None):
-    """Get the data as Numpy array from a Maskflow TFRecord file.
+    return image_info, image_annotations
     
-    Args:
-        tfrecord_path: Path of the TFRecord file (str or Path).
-        n: How many datum to get (int).
-        shuffle: Shuffle the dataset or not (bool).
-        functions: A list of Python functions to apply to the dataset (list).
-
-    Returns:
-        A tuple (features, labels) where each element is a map.
-    """
     
-    dataset = build_dataset(tfrecord_path, batch_size=n, num_epochs=1, shuffle=shuffle, functions=functions)
-    iterator = dataset.make_one_shot_iterator()
-
-    if not tf.executing_eagerly():
-        with tf.Session() as sess:
-            return sess.run(iterator.get_next())
-    else:
-        images, annotations = iterator.get_next()
-        labels_dict = {"masks": annotations["masks"].numpy(),
-                       "class_ids": annotations["class_ids"].numpy(),
-                       "image_id": annotations["image_id"].numpy()}
-        return images.numpy(), labels_dict
+def save_annotations(annotations, annotation_path):
+    with open(annotation_path, 'w') as f:
+        json.dump(annotations, f)

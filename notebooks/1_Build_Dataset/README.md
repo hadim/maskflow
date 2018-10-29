@@ -1,3 +1,5 @@
+**TODO**: Fllowing is deprecated.
+
 # Training dataset Generation
 
 To train your dataset on `maskflow` you have **two choices**. Note that for inference, more classic Numpy arrays are used as input.

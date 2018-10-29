@@ -29,6 +29,8 @@ dependencies:
   - tensorboard
   - pytorch-nightly
   - torchvision
+  - importlib_resources
   - pip:
     - pycocotools
+    - yacs
     - https://github.com/facebookresearch/maskrcnn-benchmark/archive/3308cd926bacef22bc907d508d624580245cc0d1.zip

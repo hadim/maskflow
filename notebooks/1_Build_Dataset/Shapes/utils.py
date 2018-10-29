@@ -153,4 +153,4 @@ def generate_mask(bg_color, height, width, shapes, class_names):
     mask = mask.swapaxes(0, 2)
     mask = mask.swapaxes(1, 2)
     
-    return mask, class_ids.astype(np.int32)
+    return mask, class_ids.astype("int")
