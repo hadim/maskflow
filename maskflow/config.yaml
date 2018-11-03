@@ -18,6 +18,9 @@ MODEL:
   DEVICE: "cuda"
   WEIGHT: ""
   META_ARCHITECTURE: "GeneralizedRCNN"
+  
+  MASK_ON: True
+  RPN_ONLY: False
 
   BACKBONE:
     # The backbone conv body to use
@@ -69,7 +72,7 @@ MODEL:
     # Number of top scoring RPN proposals to keep after combining proposals from
     # all FPN levels
     FPN_POST_NMS_TOP_N_TRAIN: 2000
-    FPN_POST_NMS_TOP_N_TEST: 2000
+    FPN_POST_NMS_TOP_N_TEST: 1000
 
   ROI_HEADS:
     USE_FPN: True
@@ -107,18 +110,19 @@ MODEL:
     PREDICTOR : "FPNPredictor"
     POOLER_RESOLUTION : 7
     POOLER_SAMPLING_RATIO : 2
-    #POOLER_SCALES : (0.25, 0.125, 0.0625, 0.03125)
+    POOLER_SCALES : [0.25, 0.125, 0.0625, 0.03125]
+    # NUM_CLASSES must include the background class. Its id is 0.
     NUM_CLASSES : 2
     # Hidden layer dimension when using an MLP for the RoI box head
     MLP_HEAD_DIM: 1024
+    PREDICTOR: "FPNPredictor"
 
-  MASK_ON: True
   ROI_MASK_HEAD:
     FEATURE_EXTRACTOR: "MaskRCNNFPNFeatureExtractor"
     PREDICTOR: "MaskRCNNC4Predictor"
     POOLER_RESOLUTION: 14
     POOLER_SAMPLING_RATIO: 2
-    #POOLER_SCALES: (0.25, 0.125, 0.0625, 0.03125)
+    POOLER_SCALES: [0.25, 0.125, 0.0625, 0.03125]
     MLP_HEAD_DIM: 1024
     CONV_LAYERS: [256, 256, 256, 256]
     RESOLUTION: 28
@@ -126,16 +130,17 @@ MODEL:
 
 DATALOADER:
   SIZE_DIVISIBILITY: 32
+  NUM_WORKERS: 1
 
 SOLVER:
   MAX_ITER: 90000
   BASE_LR: 0.02
+  WEIGHT_DECAY: 0.0001
+  STEPS: [60000, 80000]
   BIAS_LR_FACTOR: 2
   MOMENTUM: 0.9
-  WEIGHT_DECAY: 0.0001
   WEIGHT_DECAY_BIAS: 0
   GAMMA: 0.1
-  STEPS: [60000, 80000]
   CHECKPOINT_PERIOD: 2500
   WARMUP_FACTOR: 0.33
   WARMUP_ITERS: 500
@@ -143,7 +148,10 @@ SOLVER:
   # Number of images per batch
   # This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
   # see 2 images per batch
-  IMS_PER_BATCH: 2
+  IMS_PER_BATCH: 1
+
+TEST:
+  IMS_PER_BATCH: 1
 
 OUTPUT_DIR: "."
 PATHS_CATALOG: "."

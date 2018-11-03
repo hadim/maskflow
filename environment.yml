@@ -30,7 +30,8 @@ dependencies:
   - pytorch-nightly
   - torchvision
   - importlib_resources
+  - pillow
   - pip:
     - pycocotools
     - yacs
-    - https://github.com/facebookresearch/maskrcnn-benchmark/archive/3308cd926bacef22bc907d508d624580245cc0d1.zip
+    - https://github.com/facebookresearch/maskrcnn-benchmark/archive/4a333692eaf6b3e5118ed2169a9c57b05ef82ede.zip
