@@ -1,4 +1,4 @@
-# `maskflow`: Object Detection and Segmentation for ell Biology
+# `maskflow`: Object Detection and Segmentation for Cell Biology
 
 A Python package for [Mask RCNN semantic segmentation](https://arxiv.org/abs/1703.06870) in microsopy images. It uses [the following implementation](https://github.com/facebookresearch/maskrcnn-benchmark).
 
