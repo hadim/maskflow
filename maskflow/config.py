@@ -1,7 +1,10 @@
 import collections
 from pathlib import Path
 
-import importlib_resources
+try:
+    import importlib_resources as resources
+except:
+    import importlib.resources as resources
 from maskrcnn_benchmark.config import cfg
 
 import yaml
@@ -14,10 +17,10 @@ def update(d, u):
         else:
             d[k] = v
     return d
-  
-    
+
+
 def get_default_config():
-    with importlib_resources.open_text('maskflow', 'config.yaml') as f:
+    with resources.open_text('maskflow', 'config.yaml') as f:
         config = update(cfg, yaml.load(f.read()))
     return config
 
