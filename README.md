@@ -1,4 +1,6 @@
 # `maskflow`: Object Detection and Segmentation for Cell Biology
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/hadim/maskflow/master?urlpath=lab/tree/notebooks)
+[![Build Status](https://travis-ci.com/hadim/maskflow.svg?branch=master)](https://travis-ci.com/hadim/maskflow)
 
 A Python package for [Mask RCNN semantic segmentation](https://arxiv.org/abs/1703.06870) in microsopy images. It uses [the following implementation](https://github.com/facebookresearch/maskrcnn-benchmark).
 
