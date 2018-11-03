@@ -51,20 +51,21 @@ def build_model(config, model_dir, use_last_model, model_to_use,
     '''
     
     # Configure folder to save model checkpoints and log files.
+    current_model_path = None
     if model_to_use:
         current_model_path = model_dir / model_to_use
     else:
         if use_last_model:
             folders = sorted(list(filter(lambda p: p.is_dir(), model_dir.iterdir())))
-            # If it exists select the most recent folder.
-            assert len(folders) >= 1, f'{model_dir} does not contain any directories.'
-            model_to_use = folders[-1]
-            current_model_path = model_dir / model_to_use
-        else:
-            now = datetime.datetime.now()
-            model_to_use = now.strftime("%Y.%m.%d-%H:%M:%S")
-            current_model_path = model_dir / model_to_use
-            current_model_path.mkdir(exist_ok=True)
+            if len(folders) >= 1:
+                model_to_use = folders[-1]
+                current_model_path = model_dir / model_to_use
+    
+    if not current_model_path:
+        now = datetime.datetime.now()
+        model_to_use = now.strftime("%Y.%m.%d-%H:%M:%S")
+        current_model_path = model_dir / model_to_use
+        current_model_path.mkdir(exist_ok=True)
 
     assert current_model_path.is_dir(), f'{current_model_path} does not exist'
 
