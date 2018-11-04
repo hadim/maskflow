@@ -23,10 +23,8 @@ MODEL:
   RPN_ONLY: False
 
   BACKBONE:
-    # The backbone conv body to use
-    # The string must match a function that is imported in modeling.model_builder
-    # (e.g., 'FPN.add_fpn_ResNet101_conv5_body' to specify a ResNet-101-FPN
-    # backbone)
+    # The backbone conv body to use among:
+    # R-101-FPN, R-50-FPN and R-50-C4
     CONV_BODY: "R-50-FPN"
 
     # Add StopGrad at a specified stage so the bottom layers are froze

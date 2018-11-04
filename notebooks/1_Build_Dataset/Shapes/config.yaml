@@ -11,13 +11,33 @@ INPUT:
   MAX_SIZE_TEST: 256
 
 MODEL:
+
+  BACKBONE:
+    # The backbone conv body to use among:
+    # R-101-FPN, R-50-FPN and R-50-C4
+    CONV_BODY: "R-50-FPN"
+
   ROI_BOX_HEAD:
     # NUM_CLASSES must include the background class. Its id is 0.
     NUM_CLASSES : 4
+    
+  ROI_HEADS:
+    USE_FPN: True
+    
+    # Only used durign inference
 
-  ROI_MASK_HEAD:
-    POOLER_RESOLUTION: 14
-    POOLER_SAMPLING_RATIO: 2
+    # Minimum score threshold (assuming scores in a [0, 1] range); a value chosen to
+    # balance obtaining high recall with not having too many low precision
+    # detections that will slow down inference post processing steps (like NMS)
+    SCORE_THRESH: 0.05
+    
+    # Overlap threshold used for non-maximum suppression (suppress boxes with
+    # IoU >= this threshold)
+    NMS: 0.5
+    
+    # Maximum number of detections to return per image (100 is based on the limit
+    # established for the COCO dataset)
+    DETECTIONS_PER_IMG: 100
 
 SOLVER:
   MAX_ITER: 300
