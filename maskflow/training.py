@@ -142,6 +142,9 @@ def build_model(config, model_dir, use_last_model, model_to_use,
     checkpointer = DetectronCheckpointer(config, model, optimizer, scheduler, config['OUTPUT_DIR'] , save_to_disk)
     extra_checkpoint_data = checkpointer.load(config['MODEL']['WEIGHT'])
 
+    if is_a_new_model:
+        checkpointer.save('model_0000000')
+    
     # Create the data loader instance.
     logging.info(f'Create the data loader.')
     data_loader = make_data_loader(config, is_train=True, is_distributed=distributed, start_iter=0)

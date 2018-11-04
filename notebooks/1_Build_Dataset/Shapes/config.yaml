@@ -9,11 +9,16 @@ INPUT:
   # Size of the smallest side of the image during training
   MIN_SIZE_TRAIN: 128
   # Maximum size of the side of the image during training
-  MAX_SIZE_TRAIN: 256
+  MAX_SIZE_TRAIN: 128
   # Size of the smallest side of the image during testing
   MIN_SIZE_TEST: 128
   # Maximum size of the side of the image during testing
-  MAX_SIZE_TEST: 256
+  MAX_SIZE_TEST: 128
+  # Values to be used for image normalization
+  PIXEL_MEAN: [102.9801, 115.9465, 122.7717]
+  # Values to be used for image normalization
+  PIXEL_STD: [1., 1., 1.]
+
 
 MODEL:
 
@@ -43,6 +48,10 @@ MODEL:
     # Maximum number of detections to return per image (100 is based on the limit
     # established for the COCO dataset)
     DETECTIONS_PER_IMG: 100
+    
+  ROI_MASK_HEAD:
+    # Resolution of the mask used for segmentation
+    RESOLUTION: 28
 
 SOLVER:
   MAX_ITER: 300

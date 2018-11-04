@@ -74,6 +74,9 @@ def get_categories(class_names, supercategory=""):
 
 
 def get_annotations(image_id, basename, image, mask, class_ids):
+    
+    assert image.shape[:2] == mask.shape[1:], "Mask needs to have the same size as the image."
+    
     image_info = create_image_info(image_id, basename, image.shape)
 
     image_annotations = []
