@@ -1,55 +1,27 @@
 **TODO**: Fllowing is deprecated.
 
-# Training dataset Generation
+# Build your Training Dataset
 
-To train your dataset on `maskflow` you have **two choices**. Note that for inference, more classic Numpy arrays are used as input.
+## General
 
-## TFRecord
+`maskflow` does not provide ready to download dataset but instead provides notebooks that can build a various set of dataset for you. Each notebook in this folder will build a different dataset and format it to the COCO format.
 
-This is preferred way since, `maskflow` comes with convenient functions to convert your dataset to [`TFRecord` files](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset). 
+The best way to learn is to look directly at the examples:
 
-For an example, you can check the [Shapes dataset](./Shapes/Shapes.ipynb).
+- [The toy shapes dataset](./Shapes/Shapes.ipynb).
+- [The nucleus dataset](./Nucleus/Nucleus.ipynb).
 
-Here is the the features map used to format TFRecord elements:
+---
 
-```python
-{
-# An integer that identify the image.
-"image/id": tf.FixedLenFeature([], tf.int64),
-# The name of the image.
-"image/basename": tf.FixedLenFeature([], tf.string),
-# The width of the image (W).
-"image/width": tf.FixedLenFeature([], tf.int64),
-# The height of the image (H).
-"image/height": tf.FixedLenFeature([], tf.int64),
-# The number of objects in the image (N).
-"image/n_objects": tf.FixedLenFeature([], tf.int64),
-# The image bytes as PNG.
-"image/image_bytes": tf.FixedLenFeature([], tf.string),
-# A sparse format of the mask array representing the indices of positive pixels.
-# A 1D array that is reshaped to [-1, 3], and then used by tf.sparse_tensor_to_dense(),
-# to reconsitute the mask array with the following shape [N, W, H].
-"image/masks_indices": tf.VarLenFeature(tf.int64),
-# The class indices of the objects: [N, ]. The order of the objects need to be the same
-# as for "image/masks_indices" once reconstituted by tf.sparse_tensor_to_dense().
-"image/class_ids": tf.VarLenFeature(tf.int64)
-}
-```
+## Details
 
-## tf.data.Dataset
+`maskfow` assumes the following:
 
-You can also provide your own `tf.data.Dataset` object. Here is the nestted signature you need to respect:
-
-```python
-
-def build_my_dataset():
-    # Do things...
-    return images, {"masks": masks, "class_ids": class_ids, "image_id": features['image/id']}
-```
-
-where:
-
-- `images`: The image array, `[W, H, C]`.
-- `masks`: The mask array, `[N, W, H]`, where `N` is the number of objects in the image.
-- `class_ids`: The different class id of the objects, `[N,]`.
-- `image_id`: the id of the image, `[]`.
+- A root directory is created for each model/dataset (`ROOT`).
+- A data directory called `Data` is created inside the root directory, it contains the following:
+    - `train_dataset/`: it contains one PNG image per sample, used for training.
+    - `test_dataset/`: it contains one PNG image per sample, used for testing/evaluation.
+    - `train_annotations.json`: image annotations of the training dataset following the COCO format.
+    - `test_annotations.json`: image annotations of the testing dataset following the COCO format.
+- A YAML configuration file describing your model called `config.yaml`.
+- A model directory called `Models` which contains one subdirectory by training session.
