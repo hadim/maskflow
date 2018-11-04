@@ -1,5 +1,3 @@
-**TODO**: Fllowing is deprecated.
-
 # Build your Training Dataset
 
 ## General
