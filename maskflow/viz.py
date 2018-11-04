@@ -1,5 +1,8 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
+from . import inference
 
 
 def display_top_masks(image, masks, labels, categories, basesize=14, limit=4, cmap="PuBu_r"):
@@ -88,3 +91,38 @@ def batch_display_top_masks(batch_image, batch_target, batch_idx, categories, ba
         masks = target.get_field('masks')
         
         display_top_masks(image, masks, labels, categories, basesize=basesize, limit=limit, cmap=cmap)
+                      
+                      
+def display_prediction_and_gt(image, prediction, gt, class_names):
+
+    prediction = inference.post_process_predictions(prediction, image, confidence_threshold=0.7, mask_threshold=0.5)
+
+    predicted_masks = prediction.get_field('mask').numpy()[:, 0]
+    predicted_mask = inference.merge_mask(predicted_masks)
+
+    gt_masks = np.array([m.convert('mask').numpy() for m in gt.get_field('masks').polygons])
+    gt_mask = inference.merge_mask(gt_masks)
+
+    image = image.swapaxes(0, 1).swapaxes(1, 2)
+
+    to_displayed = [image, image, gt_mask, predicted_mask]
+    titles = ['Ground Truth', 'Predicted', 'Ground Truth Mask', 'Predicted Mask']
+
+    fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(8, 8), constrained_layout=True)
+    axs = axs.flatten()
+
+    colors = inference.compute_colors_for_labels(np.arange(0, len(class_names)))
+
+    for image, title, ax in zip(to_displayed, titles, axs):
+        ax.set_title(title, fontsize=16)
+        ax.imshow(image.astype(np.uint8), interpolation='none', origin=[0, 0])
+        ax.set_aspect('equal')
+
+    for (x1, y1, x2, y2), label in zip(prediction.bbox, prediction.get_field('labels').numpy()):
+        w = x2 - x1
+        h = y2 - y1
+        color = colors[label - 1]
+        axs[0].add_artist(matplotlib.patches.Rectangle([x1, y1], w, h, fill=None, linewidth=4, edgecolor=color))
+        axs[1].add_artist(matplotlib.patches.Rectangle([x1, y1], w, h, fill=None, linewidth=4, edgecolor=color))
+        
+    return fig

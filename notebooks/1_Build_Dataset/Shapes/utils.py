@@ -75,7 +75,7 @@ def random_shape(height, width, class_names):
     y = np.random.randint(buffer, height - buffer - 1)
     x = np.random.randint(buffer, width - buffer - 1)
     # Size
-    s = np.random.randint(2, height // 10)
+    s = np.random.randint(10, height // 5)
     return shape, color, (x, y, s)
 
 

@@ -1,5 +1,10 @@
 # See `maskflow/config.py` for details about parameters.
 
+# Must match the names and index in the JSON annotation file
+# of the dataset.
+# This setting is convenient to use during inference but not mandatory.
+CLASS_NAMES: ["circle", "triangle", "square"]
+
 INPUT:
   # Size of the smallest side of the image during training
   MIN_SIZE_TRAIN: 128

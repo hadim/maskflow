@@ -1,5 +1,8 @@
 import json
 
+import numpy as np
+import torch
+
 from maskrcnn_benchmark.engine.inference import inference
 from maskrcnn_benchmark.modeling.detector import build_detection_model
 from maskrcnn_benchmark.utils.checkpoint import DetectronCheckpointer
@@ -45,3 +48,67 @@ def run_evaluation(config, model_path, data_dir):
         json.dump(dict(results.results), f, indent=2)
         
     return results
+
+
+def merge_mask(mask):
+    multipliers = np.arange(1, mask.shape[0] + 1)[:, np.newaxis, np.newaxis]
+    return np.sum(mask * multipliers, axis=0)
+
+
+def get_bbox(mask):
+    xx, yy = np.argwhere(mask == True).T
+
+    x1 = xx.min()
+    x2 = xx.max()
+    y1 = yy.min()
+    y2 = yy.max()
+    w = x2 - x1
+    h = y2 - y1
+    return (x1, y1), w, h
+
+
+def select_top_predictions(predictions, confidence_threshold):
+        """
+        Select only predictions which have a `score` > confidence_threshold,
+        and returns the predictions in descending order of score
+        """
+        scores = predictions.get_field("scores")
+        keep = torch.nonzero(scores > confidence_threshold).squeeze(1)
+        predictions = predictions[keep]
+        scores = predictions.get_field("scores")
+        _, idx = scores.sort(0, descending=True)
+        return predictions[idx]
+    
+
+def post_process_predictions(prediction, original_image, confidence_threshold=0.7, mask_threshold=0.5):
+    """
+    """
+    from maskrcnn_benchmark.modeling.roi_heads.mask_head.inference import Masker
+
+    # Select only top predictions
+    prediction = select_top_predictions(prediction, confidence_threshold)
+
+    # Reshape prediction (a BoxList) into the original image size
+    height, width = original_image.shape[1:]
+    prediction = prediction.resize((width, height))
+
+    if prediction.has_field("mask"):
+        # If we have masks, paste the masks in the right position
+        # in the image, as defined by the bounding boxes
+        masks = prediction.get_field("mask")
+        masker = Masker(threshold=mask_threshold, padding=1)
+        masks = masker(masks, prediction)
+        prediction.add_field("mask", masks)
+    
+    return prediction
+
+
+def compute_colors_for_labels(labels):
+    """Simple function that adds fixed colors depending on the class
+    """
+    palette = np.array([2 ** 25 - 1, 2 ** 15 - 1, 2 ** 21 - 1, 1])
+    colors = labels[:, None] * palette
+    colors = (colors % 255).astype("float")
+    colors /= 255
+    colors[:, -1] = 1
+    return colors
