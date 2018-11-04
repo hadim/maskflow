@@ -6,9 +6,10 @@ from . import cococreator
 from . import viz
 from . import training
 from . import inference
+from . import utils
 
 
-__all__ = [config, dataset, cococreator, viz, training, inference]
+__all__ = [config, dataset, cococreator, viz, training, inference, utils]
 
 
 def setup_logging():
