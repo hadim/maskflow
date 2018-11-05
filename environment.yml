@@ -29,7 +29,7 @@ dependencies:
   - tensorboard
   - pytorch-nightly
   - torchvision
-  - importlib_resources  # [py<37]
+  - importlib_resources
   - pillow
   - yacs
   - pip:
