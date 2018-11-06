@@ -78,29 +78,6 @@ def select_top_predictions(predictions, confidence_threshold):
         scores = predictions.get_field("scores")
         _, idx = scores.sort(0, descending=True)
         return predictions[idx]
-    
-
-def post_process_predictions(prediction, original_image, confidence_threshold=0.7, mask_threshold=0.5):
-    """
-    """
-    from maskrcnn_benchmark.modeling.roi_heads.mask_head.inference import Masker
-
-    # Select only top predictions
-    prediction = select_top_predictions(prediction, confidence_threshold)
-
-    # Reshape prediction (a BoxList) into the original image size
-    height, width = original_image.shape[1:]
-    prediction = prediction.resize((width, height))
-
-    if prediction.has_field("mask"):
-        # If we have masks, paste the masks in the right position
-        # in the image, as defined by the bounding boxes
-        masks = prediction.get_field("mask")
-        masker = Masker(threshold=mask_threshold, padding=1)
-        masks = masker(masks, prediction)
-        prediction.add_field("mask", masks)
-    
-    return prediction
 
 
 def compute_colors_for_labels(labels):

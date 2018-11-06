@@ -128,8 +128,11 @@ MODEL:
     POOLER_SCALES: [0.25, 0.125, 0.0625, 0.03125]
     MLP_HEAD_DIM: 1024
     CONV_LAYERS: [256, 256, 256, 256]
+    # Resolution of the mask used for segmentation
+    # This increase dramatically the model memory usage.
     RESOLUTION: 28
     SHARE_BOX_FEATURE_EXTRACTOR: False
+    POSTPROCESS_MASKS: True
 
 DATALOADER:
   SIZE_DIVISIBILITY: 32

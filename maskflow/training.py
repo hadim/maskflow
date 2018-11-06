@@ -1,7 +1,10 @@
 import datetime
 import logging
+import time
 
 import torch
+import pandas as pd
+import numpy as np
 
 from maskrcnn_benchmark.config import cfg
 from maskrcnn_benchmark.data import make_data_loader
@@ -15,6 +18,8 @@ from maskrcnn_benchmark.utils.comm import synchronize
 from maskrcnn_benchmark.utils.imports import import_file
 from maskrcnn_benchmark.utils.logger import setup_logger
 from maskrcnn_benchmark.utils.miscellaneous import mkdir
+from maskrcnn_benchmark.utils.metric_logger import MetricLogger
+from maskrcnn_benchmark.engine.trainer import reduce_loss_dict
 
 from .config import save_config
 from . import utils
@@ -73,6 +78,11 @@ def build_model(config, model_dir, use_last_model, model_to_use,
         use_last_model: str, name of the folder in `model_dir` to restore checkpoints.
         use_pretrained_weights: bool, use pretrained weights if possible.
     '''
+    
+    # Do some configuration checks.
+
+    pooler_resolution = config['MODEL']['ROI_MASK_HEAD']['RESOLUTION'] // 2
+    config['MODEL']['ROI_MASK_HEAD']['POOLER_RESOLUTION'] = pooler_resolution
     
     # Configure folder to save model checkpoints and log files.
     current_model_path = None
@@ -162,12 +172,84 @@ def build_model(config, model_dir, use_last_model, model_to_use,
     training_args['device'] = device
     training_args['checkpoint_period'] = config['SOLVER']['CHECKPOINT_PERIOD']
     training_args['arguments'] = extra_checkpoint_data if extra_checkpoint_data else {'iteration': 0}
+    training_args['model_path'] = current_model_path
     
     # Save the configuration used in the model folder.
     save_config(config, current_model_path / "config.yaml")
     
-    logging.info('Model ready to be use.')
+    logging.info('Model ready to be trained.')
     
-    return training_args, current_model_path
+    return training_args
 
 
+def do_train(model, data_loader, optimizer, scheduler, checkpointer,
+             device, checkpoint_period, arguments, model_path,
+             log_period=20, log_losses_detailed=False, save_metrics=True):
+    
+    logger = logging.getLogger("maskfow.training")
+    logger.info(f"Start training at iteration {arguments['iteration']}")
+    
+    meters = MetricLogger(delimiter="  ")
+                
+    max_iter = len(data_loader)
+    start_iter = arguments['iteration']
+    model.train()
+                
+    logger.info(f"Training will stop at {max_iter}")
+                
+    start_training_time = time.time()
+    end = time.time()
+                
+    # Record losses
+    metrics = pd.DataFrame([])
+    metrics_path = model_path / "training_metrics.csv"
+                
+    for iteration, (images, targets, _) in enumerate(data_loader, start_iter):
+        data_time = time.time() - end
+                
+        scheduler.step()
+
+        images = images.to(device)
+        targets = [target.to(device) for target in targets]
+
+        loss_dict = model(images, targets)
+        losses = np.sum(loss for loss in loss_dict.values())
+
+        # Reduce losses over all GPUs for logging purposes
+        loss_dict_reduced = reduce_loss_dict(loss_dict)
+        losses_reduced = np.sum(loss for loss in loss_dict_reduced.values())
+        meters.update(loss=losses_reduced, **loss_dict_reduced)
+        
+        optimizer.zero_grad()
+        losses.backward()
+        optimizer.step()
+
+        batch_time = time.time() - end
+        end = time.time()
+        meters.update(time=batch_time, data=data_time)
+
+        eta_seconds = meters.time.global_avg * (max_iter - iteration)
+        eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
+                
+        datum = {}
+        datum.update({k: float(v) for k, v in loss_dict_reduced.items()})
+        datum['loss'] = float(losses_reduced)
+        datum['eta'] = eta_string
+        datum['iteration'] = iteration
+        datum['memory'] = torch.cuda.max_memory_allocated() / float(1<<20)
+        datum['lr'] = optimizer.param_groups[0]["lr"]
+        metrics = metrics.append(pd.Series(datum), ignore_index=True)
+                
+        if iteration % log_period == 0 or iteration == (max_iter - 1):
+            log_str = "Step: {iteration} | Loss: {loss:.6f} | ETA: {eta} | LR: {lr:.6f} | Memory: {memory:.0f} MB"
+            log_str = log_str.format(**datum)
+            logger.info(log_str)
+            if log_losses_detailed:
+                logger.info(str(meters))
+                
+        if iteration % checkpoint_period == 0 and iteration > 0:
+            checkpointer_args = {'iteration': iteration}
+            checkpointer.save("model_{:07d}".format(iteration), **checkpointer_args)
+                
+        if save_metrics:
+            metrics.to_csv(metrics_path)

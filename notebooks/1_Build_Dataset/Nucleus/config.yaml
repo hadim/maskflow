@@ -50,6 +50,7 @@ MODEL:
     
   ROI_MASK_HEAD:
     # Resolution of the mask used for segmentation
+    # This increase dramatically the model memory usage.
     RESOLUTION: 28
 
 SOLVER:
