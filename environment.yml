@@ -34,4 +34,4 @@ dependencies:
   - yacs
   - pip:
     - pycocotools
-    - https://github.com/facebookresearch/maskrcnn-benchmark/archive/4a333692eaf6b3e5118ed2169a9c57b05ef82ede.zip
+    - https://github.com/facebookresearch/maskrcnn-benchmark/archive/e7edc294283147afa5b5184cc693a34cc442abfe.zip
