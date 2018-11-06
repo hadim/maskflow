@@ -232,8 +232,8 @@ def do_train(model, data_loader, optimizer, scheduler, checkpointer,
         eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
                 
         datum = {}
-        datum.update({k: float(v) for k, v in loss_dict_reduced.items()})
-        datum['loss'] = float(losses_reduced)
+        datum.update({k: v.to('cpu').detach().numpy() for k, v in loss_dict_reduced.items()})
+        datum['loss'] = losses_reduced.to('cpu').detach().numpy()
         datum['eta'] = eta_string
         datum['iteration'] = iteration
         datum['memory'] = torch.cuda.max_memory_allocated() / float(1<<20)
