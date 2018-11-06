@@ -13,6 +13,7 @@ install:
   - conda info -a
   - conda env create -q -n maskflow -f "environment.yml"
   - source activate maskflow
+  - pip install importlib_resources
   - python setup.py install
 
 script:
