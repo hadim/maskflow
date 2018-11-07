@@ -184,11 +184,18 @@ def build_model(config, model_dir, use_last_model, model_to_use,
 
 def do_train(model, data_loader, optimizer, scheduler, checkpointer,
              device, checkpoint_period, arguments, model_path,
-             log_period=20, log_losses_detailed=False, save_metrics=True):
-    
+             log_period=20, log_losses_detailed=False, save_metrics=True,
+             tensorboard=True):
+
     logger = logging.getLogger("maskfow.training")
     logger.info(f"Start training at iteration {arguments['iteration']}")
-    
+                  
+    if tensorboard:
+        from tensorboardX import SummaryWriter
+        log_path = model_path / 'logs'
+        writer = SummaryWriter(log_dir=str(log_path))
+        logger.info(f"tensorboard --logdir {log_path}")
+                
     meters = MetricLogger(delimiter="  ")
                 
     max_iter = len(data_loader)
@@ -247,9 +254,20 @@ def do_train(model, data_loader, optimizer, scheduler, checkpointer,
             if log_losses_detailed:
                 logger.info(str(meters))
                 
+            if tensorboard:
+                writer.add_scalar(f'loss/average_loss', metrics['loss'].mean(), global_step=iteration)
+                writer.add_scalar(f'loss/loss', datum['loss'], global_step=iteration)
+                for key, value in loss_dict_reduced.items():
+                    writer.add_scalar(f'loss/{key}', value.clone().to('cpu').detach().numpy(), global_step=iteration)
+                writer.add_scalar('general/memory', datum['memory'], global_step=iteration)
+                writer.add_scalar('general/lr', datum['lr'], global_step=iteration)
+                
         if iteration % checkpoint_period == 0 and iteration > 0:
             checkpointer_args = {'iteration': iteration}
             checkpointer.save("model_{:07d}".format(iteration), **checkpointer_args)
                 
         if save_metrics:
             metrics.to_csv(metrics_path)
+                
+    if tensorboard:
+        writer.close()
