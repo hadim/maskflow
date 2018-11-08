@@ -78,7 +78,7 @@ def get_annotations(image_id, basename, image, mask, class_ids):
     
     assert image.shape[:2] == mask.shape[1:], "Mask needs to have the same size as the image."
     
-    image_info = create_image_info(image_id, basename, image.shape)
+    image_info = create_image_info(image_id, basename, image.shape[:2])
 
     image_annotations = []
     for binary_mask, class_id in zip(mask, class_ids):
@@ -86,7 +86,7 @@ def get_annotations(image_id, basename, image, mask, class_ids):
 
         annotation_info = create_annotation_info(
             random.getrandbits(24), image_id, category_info, binary_mask,
-            image.shape[:-1], tolerance=0)
+            image.shape[:2], tolerance=0)
         if annotation_info:
             image_annotations.append(annotation_info)
 
