@@ -269,5 +269,10 @@ def do_train(model, data_loader, optimizer, scheduler, checkpointer,
         if save_metrics:
             metrics.to_csv(metrics_path)
                 
+    checkpointer.save("model_{:07d}".format(iteration), **arguments)
+    total_training_time = time.time() - start_training_time
+    total_time_str = str(datetime.timedelta(seconds=total_training_time))
+    logger.info("Total training time: {} ({:.4f} s / it)".format(total_time_str, total_training_time / (max_iter)))
+                
     if tensorboard:
         writer.close()

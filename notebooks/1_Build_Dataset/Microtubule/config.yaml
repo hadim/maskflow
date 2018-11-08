@@ -7,15 +7,15 @@ CLASS_NAMES: ["microtubule"]
 
 INPUT:
   # Size of the smallest side of the image during training
-  MIN_SIZE_TRAIN: 512
+  MIN_SIZE_TRAIN: 256
   # Maximum size of the side of the image during training
-  MAX_SIZE_TRAIN: 512
+  MAX_SIZE_TRAIN: 256
   # Size of the smallest side of the image during testing
-  MIN_SIZE_TEST: 512
+  MIN_SIZE_TEST: 256
   # Maximum size of the side of the image during testing
-  MAX_SIZE_TEST: 512
+  MAX_SIZE_TEST: 256
   # Values to be used for image normalization
-  PIXEL_MEAN: [102.9801, 115.9465, 122.7717]
+  PIXEL_MEAN: [100.0, 100.0, 100.0]
   # Values to be used for image normalization
   PIXEL_STD: [1., 1., 1.]
 
