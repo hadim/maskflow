@@ -37,6 +37,8 @@ dependencies:
   - ipyvolume
   - lmfit
   - pip:
+    # Only for tensorboard
+    - tensorflow
     - pycocotools
     - https://github.com/facebookresearch/maskrcnn-benchmark/archive/e7edc294283147afa5b5184cc693a34cc442abfe.zip
     - https://github.com/lanpa/tensorboardX/archive/d56cc06d452e6e9faf2e9cfb071e8525a57c7624.zip
