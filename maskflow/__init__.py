@@ -8,8 +8,9 @@ from . import training
 from . import inference
 from . import utils
 from . import model
+from . import archive
 
-__all__ = [config, dataset, cococreator, viz, training, inference, utils, model]
+__all__ = [config, dataset, cococreator, viz, training, inference, utils, model, archive]
 
 
 def setup_logging():
