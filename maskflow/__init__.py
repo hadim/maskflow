@@ -28,3 +28,9 @@ def setup_logging():
     root_logger.addHandler(console_handler)
 
 setup_logging()
+
+# Prevent multiprocessing bug
+# See https://github.com/pytorch/pytorch/issues/973
+import torch
+torch.multiprocessing.set_sharing_strategy('file_system')
+    
