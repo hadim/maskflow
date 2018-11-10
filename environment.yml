@@ -36,6 +36,7 @@ dependencies:
   - tensorflow
   - ipyvolume
   - lmfit
+  - h5py
   - pip:
     # Only for tensorboard
     - tensorflow
