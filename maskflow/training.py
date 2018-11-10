@@ -187,6 +187,10 @@ def do_train(model, data_loader, optimizer, scheduler, checkpointer,
              log_period=20, log_losses_detailed=False, save_metrics=True,
              tensorboard=True):
 
+    # Prevent multiprocessing bug
+    # See https://github.com/pytorch/pytorch/issues/973
+    torch.multiprocessing.set_sharing_strategy('file_system')
+    
     logger = logging.getLogger("maskfow.training")
     logger.info(f"Start training at iteration {arguments['iteration']}")
                   
@@ -194,6 +198,7 @@ def do_train(model, data_loader, optimizer, scheduler, checkpointer,
         from tensorboardX import SummaryWriter
         log_path = model_path / 'logs'
         writer = SummaryWriter(log_dir=str(log_path))
+        #writer.add_graph(model)
         logger.info(f"tensorboard --logdir {log_path}")
                 
     meters = MetricLogger(delimiter="  ")
