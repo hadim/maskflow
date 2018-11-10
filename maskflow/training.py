@@ -185,7 +185,7 @@ def build_model(config, model_dir, use_last_model, model_to_use,
 def do_train(model, data_loader, optimizer, scheduler, checkpointer,
              device, checkpoint_period, arguments, model_path,
              log_period=20, log_losses_detailed=False, save_metrics=True,
-             tensorboard=True):
+             tensorboard=True, tensorboard_log_period=20):
 
     # Prevent multiprocessing bug
     # See https://github.com/pytorch/pytorch/issues/973
@@ -259,6 +259,7 @@ def do_train(model, data_loader, optimizer, scheduler, checkpointer,
             if log_losses_detailed:
                 logger.info(str(meters))
                 
+        if iteration % tensorboard_log_period == 0 or iteration == (max_iter - 1):
             if tensorboard:
                 writer.add_scalar(f'loss/average_loss', metrics['loss'].mean(), global_step=iteration)
                 writer.add_scalar(f'loss/loss', datum['loss'], global_step=iteration)
