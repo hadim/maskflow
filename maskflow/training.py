@@ -68,7 +68,7 @@ def _transfer_pretrained_weights(model, pretrained_model_pth):
 
 
 def build_model(config, model_dir, use_last_model, model_to_use,
-                distributed=False, local_rank=0, use_pretrained_weights=True):
+                distributed=False, use_pretrained_weights=True):
     '''Setup directory for training and build the model.
     
     Args:
@@ -141,15 +141,12 @@ def build_model(config, model_dir, use_last_model, model_to_use,
 
     # Set distributed if needed
     if distributed:
-        torch.cuda.set_device(local_rank)
-        model = torch.nn.parallel.deprecated.DistributedDataParallel(
-            model, device_ids=[local_rank], output_device=local_rank,
-            # this should be removed if we update BatchNorm stats
-            broadcast_buffers=False,)
+        # Does not work.
+        model = torch.nn.DataParallel(model)
 
     # Configure checkpoints and load previous weights.
-    save_to_disk = local_rank == 0
-    checkpointer = DetectronCheckpointer(config, model, optimizer, scheduler, config['OUTPUT_DIR'] , save_to_disk)
+    save_to_disk = True
+    checkpointer = DetectronCheckpointer(config, model, optimizer, scheduler, config['OUTPUT_DIR'], save_to_disk)
     extra_checkpoint_data = checkpointer.load(config['MODEL']['WEIGHT'])
 
     if is_a_new_model:
@@ -157,7 +154,7 @@ def build_model(config, model_dir, use_last_model, model_to_use,
     
     # Create the data loader instance.
     logging.info(f'Create the data loader.')
-    data_loader = make_data_loader(config, is_train=True, is_distributed=distributed, start_iter=0)
+    data_loader = make_data_loader(config, is_train=True, is_distributed=False, start_iter=0)
 
     # Do some checking
     num_classes_error = "The number of classes in the dataset MUST match the one in the configuration file minus one (background)."
