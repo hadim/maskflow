@@ -26,6 +26,7 @@ install:
   - conda create -n conda_env python=$PYTHON_VERSION
   - conda activate conda_env
   - conda env update -f "environment.yml"
+  - conda remove pytorch
 
 script:
   - conda activate conda_env
