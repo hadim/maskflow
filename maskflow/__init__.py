@@ -1,5 +1,6 @@
 import logging
 
+from _version import __version__
 from . import config
 from . import dataset
 from . import cococreator
@@ -10,7 +11,7 @@ from . import utils
 from . import model
 from . import archive
 
-__all__ = [config, dataset, cococreator, viz, training, inference, utils, model, archive]
+__all__ = [__version__, config, dataset, cococreator, viz, training, inference, utils, model, archive]
 
 
 def setup_logging():
@@ -33,4 +34,3 @@ setup_logging()
 # See https://github.com/pytorch/pytorch/issues/973
 import torch
 torch.multiprocessing.set_sharing_strategy('file_system')
-    
