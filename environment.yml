@@ -26,7 +26,6 @@ dependencies:
   - joblib
   - read-roi
   - pytables
-  - tensorboard
   - pytorch-nightly
   - torchvision
   - importlib_resources
@@ -40,6 +39,5 @@ dependencies:
   - pycocotools
   - pip:
     # Only for tensorboard
-    - tensorflow
     - https://github.com/facebookresearch/maskrcnn-benchmark/archive/43cb539a62d9ffb292cee4e14c1f38dc16e333a7.zip
     - https://github.com/lanpa/tensorboardX/archive/d56cc06d452e6e9faf2e9cfb071e8525a57c7624.zip
