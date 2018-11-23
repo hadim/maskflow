@@ -37,6 +37,7 @@ dependencies:
   - lmfit
   - h5py
   - pycocotools
+  - six
   - pip:
     # Only for tensorboard
     - https://github.com/facebookresearch/maskrcnn-benchmark/archive/43cb539a62d9ffb292cee4e14c1f38dc16e333a7.zip
