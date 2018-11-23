@@ -1,6 +1,6 @@
 import logging
 
-from _version import __version__
+from ._version import __version__
 from . import config
 from . import dataset
 from . import cococreator
