@@ -27,6 +27,7 @@ install:
   - conda activate conda_env
   - conda env update -f "environment.yml"
   - conda remove pytorch
+  - conda install pytorch-nightly -c pytorch
 
 script:
   - conda activate conda_env
