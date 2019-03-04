@@ -6,6 +6,8 @@ A Python package for [Mask RCNN semantic segmentation](https://arxiv.org/abs/170
 
 It comes with a [Fiji plugin](https://github.com/hadim/maskflow-fiji) that can run prediction using a model trained with this package (not ready yet).
 
+**IMPORTANT: This Python library is a proof of concept and in a very early stage. I hope to be able to continue the development at some point.**
+
 ## Trained Models
 
 `maskflow` allows you to easily trained [your own dataset for object detection and segmentation](./notebooks/1_Build_Dataset/README.md).
