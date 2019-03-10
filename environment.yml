@@ -1,44 +1,20 @@
-# Create with `conda env create -f environment.yml`
-name: maskflow
-
+# Usqge: `conda env update -f environment.yml`
 channels:
-  - pytorch
   - conda-forge
-
+  
 dependencies:
-  - python
-  - numpy
-  - scipy
-  - matplotlib
-  - pandas
-  - opencv
-  - tifffile
-  - scikit-image
-  - scikit-learn
-  - ipykernel
-  - opencv
-  - cython
-  - protobuf
-  - pyyaml
-  - tqdm
-  - ipywidgets
-  - markdown
-  - joblib
-  - read-roi
-  - pytables
-  - pytorch-nightly
-  - torchvision
-  - importlib_resources
-  - pillow
-  - yacs
-  - tensorboard
-  - tensorflow
-  - ipyvolume
-  - lmfit
-  - h5py
-  - pycocotools
-  - six
-  - pip:
-    # Only for tensorboard
-    - https://github.com/facebookresearch/maskrcnn-benchmark/archive/43cb539a62d9ffb292cee4e14c1f38dc16e333a7.zip
-    - https://github.com/lanpa/tensorboardX/archive/d56cc06d452e6e9faf2e9cfb071e8525a57c7624.zip
+    - python>=3.6
+    - numpy
+    - scipy
+    - matplotlib
+    - pillow
+    - scikit-image
+    - scikit-learn
+    - tifffile
+    - scipy
+    - opencv
+    - pycocotools
+    - tqdm
+    - pip:
+      - tensorflow==2.0.0-alpha0
+      - tensorboard
