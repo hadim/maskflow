@@ -1,7 +1,7 @@
 # Usqge: `conda env update -f environment.yml`
 channels:
   - conda-forge
-  
+
 dependencies:
     - python>=3.6
     - numpy
@@ -15,6 +15,10 @@ dependencies:
     - opencv
     - pycocotools
     - tqdm
-    - pip:
-      - tensorflow==2.0.0-alpha0
-      - tensorboard
+    - ipykernel
+    # Tensorflow needs to be instaled manually
+    # via `pip`. Choose CPU or GPU.
+    #- pip:
+    #  - tensorflow==2.0.0-alpha0
+    #  # or
+    #  - tensorflow-gpu==2.0.0-alpha0
