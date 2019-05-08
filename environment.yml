@@ -25,6 +25,7 @@ dependencies:
     - astor
     - termcolor
     - h5py
+    - wrapt
     # Tensorboard dependencies
     - werkzeug
     - markdown
