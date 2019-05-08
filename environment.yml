@@ -15,10 +15,26 @@ dependencies:
     - opencv
     - pycocotools
     - tqdm
-    - ipykernel
-    # Tensorflow needs to be instaled manually
-    # via `pip`. Choose CPU or GPU.
+    - jupyterlab
+    - nose
+    - pandas
+    # Tensorflow dependencies
+    - protobuf
+    - absl-py
+    - gast
+    - astor
+    - termcolor
+    - h5py
+    # Tensorboard dependencies
+    - werkzeug
+    - markdown
+    - grpcio
     #- pip:
-    #  - tensorflow==2.0.0-alpha0
-    #  # or
-    #  - tensorflow-gpu==2.0.0-alpha0
+        #- pip install --no-deps keras_preprocessing keras_applications tensorflow-estimator tensorflow-datasets
+        #- pip install --no-deps tensorflow==2.0.0-alpha0 tensorboard
+        # or
+        #- pip install --no-deps tensorflow-gpu==2.0.0-alpha0 tensorboard
+        # or
+        #- pip install --no-deps tf-nightly-2.0-preview tb-nightly
+        # or
+        #- pip install --no-deps tf-nightly-gpu-2.0-preview tb-nightly

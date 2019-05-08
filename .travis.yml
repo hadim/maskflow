@@ -26,8 +26,8 @@ install:
   - conda create -n conda_env python=$PYTHON_VERSION
   - conda activate conda_env
   - conda env update -f "environment.yml"
-  - conda remove pytorch
-  - conda install pytorch-nightly -c pytorch
+  - pip install --no-deps keras_preprocessing keras_applications tensorflow-estimator tensorflow-datasets
+  - pip install --no-deps tf-nightly-2.0-preview tb-nightly
 
 script:
   - conda activate conda_env
