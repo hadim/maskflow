@@ -30,6 +30,6 @@ install:
   - pip install --no-deps tf-nightly-cpu-2.0-preview tb-nightly
 
 script:
-  - conda activate conda_env
+  - source activate conda_env
   - python setup.py install
   - nosetests -v -s .
