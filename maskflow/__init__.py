@@ -8,7 +8,7 @@ from .config import load_config
 from .config import save_config
 
 from . import dataset
-from . import image
+from . import imaging
 
 #from . import dataset
 #from . import cococreator

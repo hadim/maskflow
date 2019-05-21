@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+
 def compute_iou(box, boxes, box_area, boxes_area):
     """Calculates IoU of the given box with the array of the given boxes.
     box: 1D vector [y1, x1, y2, x2]
@@ -136,21 +137,30 @@ def generate_mask(bg_color, height, width, shapes, class_names):
     """
     """
     count = len(shapes)
-    mask = np.zeros([height, width, count], dtype=np.uint8)
+    masks = np.zeros([height, width, count], dtype=np.uint8)
     for i, (shape, _, dims) in enumerate(shapes):
-        mask[:, :, i:i + 1] = draw_shape(mask[:, :, i:i + 1].copy(), shape, dims, 1)
+        masks[:, :, i:i + 1] = draw_shape(masks[:, :, i:i + 1].copy(), shape, dims, 1)
         
     # Handle occlusions
-    occlusion = np.logical_not(mask[:, :, -1]).astype(np.uint8)
+    occlusion = np.logical_not(masks[:, :, -1]).astype(np.uint8)
     for i in range(count - 2, -1, -1):
-        mask[:, :, i] = mask[:, :, i] * occlusion
-        occlusion = np.logical_and(occlusion, np.logical_not(mask[:, :, i]))
+        masks[:, :, i] = masks[:, :, i] * occlusion
+        occlusion = np.logical_and(occlusion, np.logical_not(masks[:, :, i]))
         
     # Map class names to class IDs.
-    # +1 because 0 is background
-    class_ids = np.array([class_names.index(s[0]) + 1 for s in shapes])
+    class_ids = np.array([class_names.index(s[0]) for s in shapes])
     
-    mask = mask.swapaxes(0, 2)
-    mask = mask.swapaxes(1, 2)
+    masks = masks.swapaxes(0, 2)
+    masks = masks.swapaxes(1, 2)
     
-    return mask, class_ids.astype("int")
+    # Sometime mask are empty (drop them).
+    cleaned_masks = []
+    cleaned_class_ids = []
+
+    for i, mask in enumerate(masks):
+        n_pixels = np.sum(mask > 0)
+        if n_pixels > 0:
+            cleaned_masks.append(mask)
+            cleaned_class_ids.append(class_ids[i])
+            
+    return np.array(cleaned_masks), np.array(cleaned_class_ids)

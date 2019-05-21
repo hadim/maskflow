@@ -1,4 +1,4 @@
-# `maskflow`: Object Detection and Segmentation for Cell Biology
+# Maskflow: Object Detection and Segmentation for Cell Biology
 [![Build Status](https://travis-ci.com/hadim/maskflow.svg?branch=master)](https://travis-ci.com/hadim/maskflow)
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/hadim/maskflow/master?urlpath=lab/tree/notebooks)
 
@@ -9,7 +9,8 @@ The framework aims to be:
 - **easy-to-use**: Any person with a minimal Python experience should be able to train and deploy a model.
 - **flexible**: While we implement a default model that works well we want to allow the creation of new models easily by just swapping sub-models (*replace the ResNet backbone by a DenseNet backbone for example*).
 - **universal**: You should be able to predict labels, bounding boxes, masks. Moreover why do we have to restrict to those when you can predict any kind of polygon describing your objects (*polygon detections is not yet implemented*)?
-- **easy-to-deploy**: Deploy your model using Docker and run inference by sending REST calls to it. 
+- **easy-to-deploy**: Deploy your model using Docker and run inference by sending REST calls to it.
+- **test-driven**: Maskflow development is test-driven in order to provide a robust and API.
 
 As Maskflow is originally designed for biological images, it comes with a [Fiji plugin](https://github.com/hadim/maskflow-fiji) that can run a model previously trained (*the plugin will be available very soon*).
 

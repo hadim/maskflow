@@ -16,35 +16,30 @@ The best way to learn is to look directly at the examples:
 To train a dataset you need:
 
 - A YAML configuration file describing your model `config.yaml`.
-- TFRecord files previously generated: `train.tfrecord` and `test.tfrecord`.
+- TFRecord files previously generated: `train.tfrecords` and `test.tfrecords`.
 
 Here is how a TFRecord file is structured:
 
 ```python
-feature_dict = {}
+feature_description = {}
 
 # Image features
-feature_dict['image/height'] = maskflow.dataset.int64_feature(image_height)
-feature_dict['image/width'] = maskflow.dataset.int64_feature(image_width)
-feature_dict['image/filename'] = maskflow.dataset.bytes_feature(filename.encode('utf8'))
-feature_dict['image/source_id'] = maskflow.dataset.bytes_feature(str(image_id).encode('utf8'))
-feature_dict['image/key/sha256'] = maskflow.dataset.bytes_feature(key.encode('utf8'))
-feature_dict['image/encoded'] = maskflow.dataset.bytes_feature(encoded_image)
-feature_dict['image/format'] = maskflow.dataset.bytes_feature(image_format.encode('utf8'))
+feature_description['image/height'] = tf.io.FixedLenFeature([], tf.int64)
+feature_description['image/width'] = tf.io.FixedLenFeature([], tf.int64)
+feature_description['image/channel'] = tf.io.FixedLenFeature([], tf.int64)
+feature_description['image/filename'] = tf.io.FixedLenFeature([], tf.string)
+feature_description['image/source_id'] = tf.io.FixedLenFeature([], tf.string)
+feature_description['image/encoded'] = tf.io.FixedLenFeature([], tf.string)
+feature_description['image/key/sha256'] = tf.io.FixedLenFeature([], tf.string)
+feature_description['image/format'] = tf.io.FixedLenFeature([], tf.string)
 
 # Object features
-feature_dict['image/object/bbox/xmin'] = maskflow.dataset.float_list_feature(xmin)
-feature_dict['image/object/bbox/xmax'] = maskflow.dataset.float_list_feature(xmax)
-feature_dict['image/object/bbox/ymin'] = maskflow.dataset.float_list_feature(ymin)
-feature_dict['image/object/bbox/ymax'] = maskflow.dataset.float_list_feature(ymax)
-feature_dict['image/object/class/text'] = maskflow.dataset.float_list_feature(category_names)
-feature_dict['image/object/class/label'] = maskflow.dataset.int64_list_feature(category_ids)
-feature_dict['image/object/mask'] = maskflow.dataset.bytes_list_feature(encoded_mask_png)
-
-# Features currently not used
-#feature_dict['image/object/is_crowd'] = maskflow.dataset.int64_list_feature(is_crowd)
-#feature_dict['image/object/area'] = maskflow.dataset.float_list_feature(area)
-#feature_dict['image/caption'] = maskflow.dataset.bytes_list_feature(captions)
-
-example = tf.train.Example(features=tf.train.Features(feature=feature_dict))
+feature_description['image/object/bbox/x'] = tf.io.VarLenFeature(tf.float32)
+feature_description['image/object/bbox/y'] = tf.io.VarLenFeature(tf.float32)
+feature_description['image/object/bbox/width'] = tf.io.VarLenFeature(tf.float32)
+feature_description['image/object/bbox/height'] = tf.io.VarLenFeature(tf.float32)
+feature_description['image/object/class/text'] = tf.io.VarLenFeature(tf.string)
+feature_description['image/object/class/label'] = tf.io.VarLenFeature(tf.int64)
+feature_description['image/object/masks'] = tf.io.VarLenFeature(tf.string)
+feature_description['image/object/mask_format'] = tf.io.FixedLenFeature([], tf.string)
 ```
