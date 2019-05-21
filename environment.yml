@@ -21,6 +21,7 @@ dependencies:
     - pyyaml
     - pylint
     - mypy
+    - importlib_resources
     # Tensorflow dependencies
     - protobuf
     - absl-py

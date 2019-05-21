@@ -1,4 +1,17 @@
+import base64
+from io import BytesIO
+
 import numpy as np
+from PIL import Image
+
+
+def encode_image(image, image_format):
+    """Convert Numpy image to a string of JPEG, PNG or TIFF."""
+    pil_img = Image.fromarray(image)
+    buffer = BytesIO()
+    pil_img.save(buffer, format=image_format)
+    return base64.b64encode(buffer.getvalue()).decode("utf8")
+
 
 def crop_image(image, masks, class_ids, final_size):
     """Crop image and mask to final_size if needed. It add zeros values if image is
