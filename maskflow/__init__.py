@@ -9,10 +9,10 @@ from .config import save_config
 
 from . import dataset
 from . import imaging
+from . import viz
 
 #from . import dataset
 #from . import cococreator
-#from . import viz
 #from . import training
 #from . import inference
 #from . import utils

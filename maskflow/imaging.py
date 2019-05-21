@@ -1,16 +1,28 @@
 import base64
 from io import BytesIO
 
+import tensorflow as tf
 import numpy as np
-from PIL import Image
 
 
-def encode_image(image, image_format):
+def encode_image(image, image_format, quality=95, compression=-1):
     """Convert Numpy image to a string of JPEG, PNG or TIFF."""
-    pil_img = Image.fromarray(image)
-    buffer = BytesIO()
-    pil_img.save(buffer, format=image_format)
-    return base64.b64encode(buffer.getvalue()).decode("utf8")
+    
+    image_format = image_format.casefold()
+    
+    if image.ndim == 2:
+        image = np.expand_dims(image, -1)
+    
+    if image_format == "jpeg" or image_format == "jpg":
+        encoded_image = tf.image.encode_jpeg(image, quality=quality)
+    elif image_format == "png":
+        encoded_image = tf.image.encode_png(image, compression=compression)
+    elif image_format == "tiff" or image_format == "tif":
+        raise Exception(f"TIFF format is currentlynot supported.")
+    else:
+        raise Exception(f"Image format not supported: {image_format}")
+    
+    return encoded_image
 
 
 def crop_image(image, masks, class_ids, final_size):
