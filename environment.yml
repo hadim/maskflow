@@ -39,6 +39,6 @@ dependencies:
         # or
         #- pip install --no-deps tensorflow-gpu==2.0.0-alpha0 tensorboard
         # or
-        #- pip install --no-deps tf-nightly-2.0-preview tb-nightly
+        #- pip install --no-deps tf-nightly-cpu-2.0-preview tb-nightly
         # or
-        #- pip install --no-deps tf-nightly-gpu-2.0-preview tb-nightly
+        #- pip install --no-deps tf-nightly-2.0-preview tb-nightly
