@@ -80,7 +80,7 @@ def random_shape(height, width, class_names):
     return shape, color, (x, y, s)
 
 
-def random_image(height, width, max_n, class_names):
+def random_image(height, width, min_n, max_n, class_names):
     """Creates random specifications of an image with multiple shapes.
     Returns the background color of the image and a list of shape
     specifications that can be used to draw the image.
@@ -91,7 +91,7 @@ def random_image(height, width, max_n, class_names):
     # bounding boxes
     shapes = []
     boxes = []
-    N = np.random.randint(1, max_n + 1)
+    N = np.random.randint(min_n, max_n + 1)
     for _ in range(N):
         shape, color, dims = random_shape(height, width, class_names)
         shapes.append((shape, color, dims))
@@ -99,8 +99,9 @@ def random_image(height, width, max_n, class_names):
         boxes.append([y - s, x - s, y + s, x + s])
     # Apply non-max suppression wit 0.3 threshold to avoid
     # shapes covering each other
-    keep_ixs = non_max_suppression(np.array(boxes), np.arange(N), 0.3)
-    shapes = [s for i, s in enumerate(shapes) if i in keep_ixs]
+    if N > 0:
+        keep_ixs = non_max_suppression(np.array(boxes), np.arange(N), 0.3)
+        shapes = [s for i, s in enumerate(shapes) if i in keep_ixs]
     return bg_color, shapes
 
 
@@ -142,10 +143,11 @@ def generate_mask(bg_color, height, width, shapes, class_names):
         masks[:, :, i:i + 1] = draw_shape(masks[:, :, i:i + 1].copy(), shape, dims, 1)
         
     # Handle occlusions
-    occlusion = np.logical_not(masks[:, :, -1]).astype(np.uint8)
-    for i in range(count - 2, -1, -1):
-        masks[:, :, i] = masks[:, :, i] * occlusion
-        occlusion = np.logical_and(occlusion, np.logical_not(masks[:, :, i]))
+    if masks.shape[-1] > 0:
+        occlusion = np.logical_not(masks[:, :, -1]).astype(np.uint8)
+        for i in range(count - 2, -1, -1):
+            masks[:, :, i] = masks[:, :, i] * occlusion
+            occlusion = np.logical_and(occlusion, np.logical_not(masks[:, :, i]))
         
     # Map class names to class IDs.
     class_ids = np.array([class_names.index(s[0]) for s in shapes])

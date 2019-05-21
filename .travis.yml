@@ -1,16 +1,15 @@
-language: python
+language: c
 
 matrix:
   fast_finish: true
-  include:
-    - language: python
-      os: linux
-      env:
-        - PYTHON_VERSION="3.6"
-    - language: python
-      os: linux
-      env:
-        - PYTHON_VERSION="3.7"
+
+env:
+  - PYTHON_VERSION="3.6"
+  - PYTHON_VERSION="3.7"
+
+os:
+  - linux
+  - osx
 
 install:
   - sudo apt-get update
@@ -30,6 +29,6 @@ install:
   - pip install --no-deps tf-nightly-2.0-preview tb-nightly
 
 script:
-  - source activate conda_env
+  - conda activate conda_env
   - python setup.py install
   - nosetests -v -s .
