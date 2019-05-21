@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 
 setup(name="maskflow",
-      version='0.2.0',
+      version='0.5.0',
       author='Hadrien Mary',
       author_email='hadrien.mary@gmail.com',
       url='https://github.com/hadim/maskflow/',

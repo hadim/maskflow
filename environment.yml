@@ -18,6 +18,9 @@ dependencies:
     - jupyterlab
     - nose
     - pandas
+    - pyyaml
+    - pylint
+    - mypy
     # Tensorflow dependencies
     - protobuf
     - absl-py

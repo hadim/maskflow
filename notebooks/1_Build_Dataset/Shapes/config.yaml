@@ -1,61 +1,42 @@
 # See `maskflow/config.py` for details about parameters.
 
-# Must match the names and index in the JSON annotation file
-# of the dataset.
-# This setting is convenient to use during inference but not mandatory.
-CLASS_NAMES: ["circle", "triangle", "square"]
-
-INPUT:
-  # Size of the smallest side of the image during training
-  MIN_SIZE_TRAIN: 128
-  # Maximum size of the side of the image during training
-  MAX_SIZE_TRAIN: 128
-  # Size of the smallest side of the image during testing
-  MIN_SIZE_TEST: 128
-  # Maximum size of the side of the image during testing
-  MAX_SIZE_TEST: 128
+DATASET:
+  CLASS_NAMES: ["circle", "triangle", "square"]
+  
+  IMAGE_SIZE: 128
+  
   # Values to be used for image normalization
   PIXEL_MEAN: [102.9801, 115.9465, 122.7717]
+  
   # Values to be used for image normalization
   PIXEL_STD: [1., 1., 1.]
-
-
+  
 MODEL:
 
   BACKBONE:
-    # The backbone conv body to use among:
-    # R-101-FPN, R-50-FPN and R-50-C4
-    CONV_BODY: "R-50-FPN"
+    NAME: "resnet"
+    RESNET_DEPTH: 50
+    MIN_LEVEL: 3
+    MAX_LEVEL: 7
+    
+  FPN:
+    NUM_SCALES: 3
+    ASPECT_RATIOS: [[1.0, 1.0], [1.4, 0.7], [0.7, 1.4]]
 
-  ROI_BOX_HEAD:
-    # NUM_CLASSES must include the background class. Its id is 0.
-    NUM_CLASSES : 4
-    
-  ROI_HEADS:
-    USE_FPN: True
-    
-    # Only used durign inference
-
-    # Minimum score threshold (assuming scores in a [0, 1] range); a value chosen to
-    # balance obtaining high recall with not having too many low precision
-    # detections that will slow down inference post processing steps (like NMS)
-    SCORE_THRESH: 0.05
-    
-    # Overlap threshold used for non-maximum suppression (suppress boxes with
-    # IoU >= this threshold)
-    NMS: 0.5
-    
-    # Maximum number of detections to return per image (100 is based on the limit
-    # established for the COCO dataset)
-    DETECTIONS_PER_IMG: 100
-    
-  ROI_MASK_HEAD:
-    # Resolution of the mask used for segmentation
-    RESOLUTION: 28
-
-SOLVER:
-  MAX_ITER: 300
-  BASE_LR: 0.005
-  STEPS: [120, 200]
-  CHECKPOINT_PERIOD: 100
+  LOSS:
+    CLASSIFICATION:
+      ALPHA: 0.5
+      GAMMA: 1.5
+    LOCALIZATION:
+      DELTA: 0.1
+      BOX_LOSS_WEIGHT: 50.0
+  
+OPTIMIZER:
+  MOMENTUM: 0.9
+  LEARNING_RATE: 0.08
+  LR_WARMUP_INIT: 0.008
+  LR_WARMUP_EPOCH: 1.0
+  FIRST_LR_DROP_EPOCH: 8.0
+  SECOND_LR_DROP_EPOCH: 11.0
+  WEIGHT_DECAY: 0.00001
   

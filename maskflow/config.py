@@ -5,15 +5,14 @@ try:
     import importlib_resources as resources
 except:
     import importlib.resources as resources
-from maskrcnn_benchmark.config import cfg
 
 import yaml
 
 
-def update(d, u):
+def update_config(d, u):
     for k, v in u.items():
         if isinstance(v, collections.Mapping):
-            d[k] = update(d.get(k, {}), v)
+            d[k] = update_config(d.get(k, {}), v)
         else:
             d[k] = v
     return d
@@ -21,7 +20,7 @@ def update(d, u):
 
 def get_default_config():
     with resources.open_text('maskflow', 'config.yaml') as f:
-        config = update(cfg, yaml.load(f.read()))
+        config = yaml.load(f.read(), Loader=yaml.SafeLoader)
     return config
 
 
@@ -29,9 +28,8 @@ def load_config(config_path=None):
     config = get_default_config()
     if config_path:
         with open(config_path) as f:
-            config = update(config, yaml.load(f.read()))
-    # TODo: fix theis ugly hack
-    config.PATHS_CATALOG = str(Path(__file__).parent.absolute() / "paths_catalog.py")
+            loaded_config = yaml.load(f.read(), Loader=yaml.SafeLoader)
+            config = update_config(config, loaded_config)
     return config
 
 
