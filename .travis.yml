@@ -27,7 +27,7 @@ install:
   - conda activate conda_env
   - conda env update -f "environment.yml"
   - pip install --no-deps keras_preprocessing keras_applications tensorflow-estimator tensorflow-datasets
-  - pip install --no-deps tf-nightly-cpu-2.0-preview tb-nightly
+  - pip install --no-deps tf-nightly-2.0-preview tb-nightly
 
 script:
   - source activate conda_env
