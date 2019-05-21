@@ -1,11 +1,7 @@
 import collections
 from pathlib import Path
 
-try:
-    import importlib_resources as resources
-except:
-    import importlib.resources as resources
-
+import importlib_resources as resources
 import yaml
 
 

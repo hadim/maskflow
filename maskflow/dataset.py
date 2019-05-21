@@ -154,8 +154,7 @@ def _parse_tfrecord(parse_objects=True):
 def _decode_image(datum):
     # Convert image to tensor.
     encoded_image = datum['image/encoded']
-    channel = datum['image/channel']
-    datum['image'] = tf.image.decode_image(encoded_image, channels=3)
+    datum['image'] = tf.image.decode_image(encoded_image)
     return datum
 
 
