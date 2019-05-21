@@ -1,6 +1,6 @@
 # `maskflow`: Object Detection and Segmentation for Cell Biology
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/hadim/maskflow/master?urlpath=lab/tree/notebooks)
 [![Build Status](https://travis-ci.com/hadim/maskflow.svg?branch=master)](https://travis-ci.com/hadim/maskflow)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/hadim/maskflow/master?urlpath=lab/tree/notebooks)
 
 Maskflow is a Python framework for **instance object detetion and segmentation** using neural networks. It is focused on processing biological images but aims to be general enough to process any kind of dataset.
 
