@@ -11,4 +11,4 @@ from .features import build_features_dict
 
 from .parser import parse
 
-from .preprocess import preprocess
+from .preprocess import preprocess_dataset

@@ -18,7 +18,7 @@ def _pad_dataset(max_num_instances):
     return _fn
 
 
-def preprocess(dataset, max_num_instances):
+def preprocess_dataset(dataset, max_num_instances):
     """Preprocess a Maskflow dataset.
     """
 

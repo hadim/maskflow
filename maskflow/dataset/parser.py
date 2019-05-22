@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from . import get_feature_description
-from . import preprocess
+from . import preprocess_dataset
 
 
 def _parse_tfrecord(with_bboxes=True, with_label_names=True,
@@ -116,6 +116,6 @@ def parse(tfrecord_path, config, do_preprocess=True,
     dataset = dataset.map(_prune_features)
 
     if do_preprocess:
-        dataset = preprocess(dataset, config['DATASET']['MAX_NUM_INSTANCES'])
+        dataset = preprocess_dataset(dataset, config['DATASET']['MAX_NUM_INSTANCES'])
 
     return dataset
