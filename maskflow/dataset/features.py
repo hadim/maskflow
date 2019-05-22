@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 from . import int64_feature
 from . import bytes_feature

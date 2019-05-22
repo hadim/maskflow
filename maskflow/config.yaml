@@ -1,14 +1,18 @@
 DATASET:
   CLASS_NAMES: ["object_1"]
-  
+
+  # Maximum number of objects detected per image.
+  MAX_NUM_INSTANCES: 200
+
+  # Size of the image.
   IMAGE_SIZE: 128
-  
+
   # Values to be used for image normalization
   PIXEL_MEAN: [102.9801, 115.9465, 122.7717]
-  
+
   # Values to be used for image normalization
   PIXEL_STD: [1., 1., 1.]
-  
+
 MODEL:
 
   BACKBONE:
@@ -16,7 +20,7 @@ MODEL:
     RESNET_DEPTH: 50
     MIN_LEVEL: 3
     MAX_LEVEL: 7
-    
+
   FPN:
     NUM_SCALES: 3
     ASPECT_RATIOS: [[1.0, 1.0], [1.4, 0.7], [0.7, 1.4]]
@@ -28,7 +32,7 @@ MODEL:
     LOCALIZATION:
       DELTA: 0.1
       BOX_LOSS_WEIGHT: 50.0
-  
+
 OPTIMIZER:
   MOMENTUM: 0.9
   LEARNING_RATE: 0.08

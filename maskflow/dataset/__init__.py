@@ -4,9 +4,11 @@ from .utils import bytes_feature
 from .utils import bytes_list_feature
 from .utils import float_feature
 from .utils import float_list_feature
-
-from .parser import parse
-from .parser import preprocess
+from .utils import pad_first_dimension
 
 from .features import get_feature_description
 from .features import build_features_dict
+
+from .parser import parse
+
+from .preprocess import preprocess

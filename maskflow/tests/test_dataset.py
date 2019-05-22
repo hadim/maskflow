@@ -56,10 +56,12 @@ def test_parse_tfrecord():
 
     dataset = maskflow.dataset.parse(tfrecord_path)
 
-    datum = next(iter(dataset))
+    feature = next(iter(dataset))
     excepted_keys = ["image_height", "image_width", "image_channel", "image_filename",
                      "image_id", "image_encoded", "image_format", "bboxes_x",
                      "bboxes_y", "bboxes_width", "bboxes_height", "label_names",
                      "label_ids", "masks_encoded", "masks_format", 'image', 'masks']
 
-    assert datum["image_encoded"].numpy()[0][:10] == b'\x89PNG\r\n\x1a\n\x00\x00'
+    assert set(features_dict.keys()) == set(excepted_keys)
+
+    assert feature["image_encoded"].numpy()[0][:10] == b'\x89PNG\r\n\x1a\n\x00\x00'
