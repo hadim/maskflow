@@ -9,6 +9,6 @@ from .utils import pad_first_dimension
 from .features import get_feature_description
 from .features import build_features_dict
 
-from .parser import parse
-
 from .preprocess import preprocess_dataset
+
+from .parser import parse
