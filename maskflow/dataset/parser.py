@@ -61,7 +61,7 @@ def _decode_masks(feature):
     # See TODO SNIPPET TO REPRODUCE
     encoded_masks = feature['masks_encoded']
     feature['masks'] = tf.map_fn(lambda x: tf.image.decode_image(x, channels=1),
-                               encoded_masks, dtype=tf.uint8)
+                                 encoded_masks, dtype=tf.uint8)
     # Remove the channel dimension (always equal to 1).
     feature['masks'] = feature['masks'][:, :, :, 0]
     return feature
