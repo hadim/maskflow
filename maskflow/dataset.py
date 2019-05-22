@@ -75,7 +75,7 @@ def build_features_dict(image, image_id, filename, image_format=None,
     feature_dict['image_format'] = bytes_feature(image_format.encode('utf8'))
 
     # Object features
-    if bboxes:
+    if bboxes is not None:
         bboxes_x = bboxes[:, 0]
         bboxes_y = bboxes[:, 1]
         bboxes_width = bboxes[:, 2]
@@ -85,13 +85,13 @@ def build_features_dict(image, image_id, filename, image_format=None,
         feature_dict['bboxes_width'] = float_list_feature(bboxes_width)
         feature_dict['bboxes_height'] = float_list_feature(bboxes_height)
 
-    if label_ids:
+    if label_ids is not None:
         feature_dict['label_ids'] = int64_list_feature(label_ids)
 
-    if label_names:
+    if label_names is not None:
         feature_dict['label_names'] = bytes_list_feature(label_names)
 
-    if masks:
+    if masks is not None:
         # Encode masks.
         masks_encoded = []
         for mask in masks:
