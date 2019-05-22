@@ -1,6 +1,7 @@
 [MESSAGES CONTROL]
 
-disable=import-error,too-many-arguments,too-many-locals,missing-docstring
+disable=import-error,too-many-arguments,too-many-locals,missing-docstring,
+        broad-except
 
 [BASIC]
 

@@ -30,18 +30,14 @@ def test_build_feature_dict():
     features_dict = maskflow.dataset.build_features_dict(image, image_id, filename, masks,
                                                         label_ids, class_names, encoded_mask_format=encoded_mask_format)
 
-    excepted_keys = ['image/height', 'image/width', 'image/channel', 'image/filename',
-                     'image/source_id', 'image/encoded', 'image/key/sha256', 'image/format',
-                     'image/object/bbox/x', 'image/object/bbox/y', 'image/object/bbox/width',
-                     'image/object/bbox/height', 'image/object/class/text',
-                     'image/object/class/label', 'image/object/encoded_masks', 'image/object/mask_format']
+    excepted_keys = ["image_height", "image_width", "image_channel", "image_filename",
+                     "image_id", "image_encoded", "image_format", "bboxes_x",
+                     "bboxes_y", "bboxes_width", "bboxes_height", "label_names",
+                     "label_ids", "masks_encoded", "masks_format"]
 
     assert set(features_dict.keys()) == set(excepted_keys)
 
-    sha256_feature = features_dict["image/key/sha256"]
-    assert sha256_feature.bytes_list.value[0] == b'99159e822102192a3e1db2455639c5b066b79e88bb1db0df574b46127930ac30'
-
-    masks_feature = features_dict["image/object/encoded_masks"]
+    masks_feature = features_dict["image_encoded"]
     assert masks_feature.bytes_list.value[0][:10] == b'\x89PNG\r\n\x1a\n\x00\x00'
 
 
@@ -61,14 +57,9 @@ def test_parse_tfrecord():
     dataset = maskflow.dataset.parse(tfrecord_path)
 
     datum = next(iter(dataset))
-    excepted_keys = ['image/height', 'image/width', 'image/channel', 'image/filename',
-                     'image/source_id', 'image/encoded', 'image/key/sha256', 'image/format',
-                     'image/object/bbox/x', 'image/object/bbox/y', 'image/object/bbox/width',
-                     'image/object/bbox/height', 'image/object/class/text',
-                     'image/object/class/label', 'image/object/encoded_masks', 'image/object/mask_format', 'image', 'masks']
+    excepted_keys = ["image_height", "image_width", "image_channel", "image_filename",
+                     "image_id", "image_encoded", "image_format", "bboxes_x",
+                     "bboxes_y", "bboxes_width", "bboxes_height", "label_names",
+                     "label_ids", "masks_encoded", "masks_format", 'image', 'masks']
 
-    #assert set(datum.keys()) == set(excepted_keys)
-
-    assert datum["image/key/sha256"].numpy() == b'99159e822102192a3e1db2455639c5b066b79e88bb1db0df574b46127930ac30'
-
-    assert datum["image/object/encoded_masks"].numpy()[0][:10] == b'\x89PNG\r\n\x1a\n\x00\x00'
+    assert datum["image_encoded"].numpy()[0][:10] == b'\x89PNG\r\n\x1a\n\x00\x00'

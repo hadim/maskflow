@@ -1,8 +1,30 @@
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import skimage
+# import matplotlib
+# import matplotlib.pyplot as plt
+# import numpy as np
+# import skimage
 
+# def compute_colors_for_labels(labels):
+#     """Simple function that adds fixed colors depending on the class
+#     """
+#     palette = np.array([2 ** 25 - 1, 2 ** 15 - 1, 2 ** 21 - 1, 1])
+#     colors = labels[:, None] * palette
+#     colors = (colors % 255).astype("float")
+#     colors /= 255
+#     colors[:, -1] = 1
+#     return colors
+
+
+# def select_top_predictions(predictions, confidence_threshold):
+#     """
+#     Select only predictions which have a `score` > confidence_threshold,
+#     and returns the predictions in descending order of score
+#     """
+#     scores = predictions.get_field("scores")
+#     keep = torch.nonzero(scores > confidence_threshold).squeeze(1)
+#     predictions = predictions[keep]
+#     scores = predictions.get_field("scores")
+#     _, idx = scores.sort(0, descending=True)
+#     return predictions[idx]
 
 # def display_top_masks(image, masks, labels, categories, basesize=14, limit=4, cmap="PuBu_r"):
 #     """Display the given images and the top few class masks.

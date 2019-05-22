@@ -10,14 +10,9 @@ from .config import save_config
 from . import dataset
 from . import imaging
 from . import viz
-
-#from . import dataset
-#from . import cococreator
-#from . import training
-#from . import inference
-#from . import utils
-#from . import model
-#from . import archive
+from . import utils
+from . import mask
+from . import bbox
 
 
 def setup_logging():
@@ -30,5 +25,10 @@ def setup_logging():
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
+
+    # # Log to a file.
+    # file_handler = logging.FileHandler(log_path)
+    # file_handler.setFormatter(formatter)
+    # root_logger.addHandler(file_handler)
 
 setup_logging()
