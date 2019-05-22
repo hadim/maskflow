@@ -36,7 +36,7 @@ def user_data_dir(appname=None, appauthor=None, version=None, roaming=False):
 
     Typical user data directories are:
         Mac OS X: `~/Library/Application Support/<AppName>`
-        Unix: `~/.local/share/<AppName>
+        Unix: `~/.local/share/<AppName>`
         Windows (not roaming): `C:\\Users\\<username>\\AppData\\Local\\<AppAuthor>\\<AppName>`
         Windows (roaming): `C:\\Users\\<username>\\AppData\\Roaming\\<AppAuthor>\\<AppName>`
     """
