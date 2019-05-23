@@ -80,7 +80,15 @@ def _prune_features(feature):
 def parse(tfrecord_path, config, do_preprocess=True,
           with_bboxes=True, with_label_names=True,
           with_label_ids=True, with_masks=True):
-    """Parse a Maskflow TFRecord file.
+    """Parse a Maskflow TFRecord file following those steps:
+
+    - Parse TFRecord.
+    - Decode image to tensor (w, h, c).
+    - Decode list of masks to tensors (n, w, h).
+    - Decode bounding boxes.
+    - Remove unused data (encoded image and masks for example).
+    - Preprocess the data, see `maskflow.dataset.preprocess_dataset`.
+
 
     Args:
         tfrecord_path: `str`, path to TFRecord file.
@@ -92,7 +100,7 @@ def parse(tfrecord_path, config, do_preprocess=True,
         with_masks: `bool`, parse masks.
 
     Returns:
-        A Tensorflow dataset.
+        tf.data.Dataset
     """
 
     dataset = tf.data.TFRecordDataset(str(tfrecord_path))

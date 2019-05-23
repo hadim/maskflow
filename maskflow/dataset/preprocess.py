@@ -20,6 +20,16 @@ def _pad_dataset(max_num_instances):
 
 def preprocess_dataset(dataset, max_num_instances):
     """Preprocess a Maskflow dataset.
+
+    - Padding values using `max_num_instances` image, bboxes, label_ids,
+      label_names and masks.
+
+    Args:
+        dataset: `tf.data.Dataset`, a dataset.
+        max_num_instances: `int`, Number to pad data with.
+
+    Returns:
+        tf.data.Dataset
     """
 
     _pad_dataset_fn = _pad_dataset(max_num_instances)
