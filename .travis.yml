@@ -9,7 +9,6 @@ env:
 
 os:
   - linux
-  - osx
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
@@ -26,7 +25,7 @@ install:
   - conda activate conda_env
   - conda env update -f "environment.yml"
   - pip install --no-deps keras_preprocessing keras_applications tensorflow-estimator tensorflow-datasets
-  - pip install --no-deps tf-nightly-cpu-2.0-preview tb-nightly
+  - pip install --no-deps tf-nightly-2.0-preview tb-nightly
 
 script:
   - conda activate conda_env
