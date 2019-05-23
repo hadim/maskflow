@@ -46,4 +46,4 @@ install:
 script:
   - conda activate conda_env
   - python setup.py install
-  - nosetests -v -s .
+  - python -c "import maskflow; maskflow.run_all_tests()"

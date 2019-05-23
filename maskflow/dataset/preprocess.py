@@ -8,7 +8,6 @@ def _pad_dataset(max_num_instances):
     """
     def _fn(feature):
         num_elements = max_num_instances
-        feature['image'] = pad_first_dimension(feature['image'], padded_value=0, num_elements=num_elements)
         feature['bboxes'] = pad_first_dimension(feature['bboxes'], padded_value=0, num_elements=num_elements)
         feature['label_ids'] = pad_first_dimension(feature['label_ids'], padded_value=-1, num_elements=num_elements)
         feature['label_names'] = pad_first_dimension(feature['label_names'], padded_value="", num_elements=num_elements)
@@ -21,7 +20,7 @@ def _pad_dataset(max_num_instances):
 def preprocess_dataset(dataset, max_num_instances):
     """Preprocess a Maskflow dataset.
 
-    - Padding values using `max_num_instances` image, bboxes, label_ids,
+    - Padding values using `max_num_instances` bboxes, label_ids,
       label_names and masks.
 
     Args:

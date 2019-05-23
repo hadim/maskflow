@@ -7,12 +7,12 @@ import numpy as np
 
 def encode_image(image, image_format, quality=95, compression=-1):
     """Convert Numpy image to a string of JPEG, PNG or TIFF."""
-    
+
     image_format = image_format.casefold()
-    
+
     if image.ndim == 2:
         image = np.expand_dims(image, -1)
-    
+
     if image_format == "jpeg" or image_format == "jpg":
         encoded_image = tf.image.encode_jpeg(image, quality=quality)
     elif image_format == "png":
@@ -21,7 +21,7 @@ def encode_image(image, image_format, quality=95, compression=-1):
         raise Exception(f"TIFF format is currentlynot supported.")
     else:
         raise Exception(f"Image format not supported: {image_format}")
-    
+
     return encoded_image
 
 
@@ -63,3 +63,40 @@ def crop_image(image, masks, class_ids, final_size):
         return None, None, None
     else:
         return new_image, new_masks, class_ids
+
+
+def blend_image_with_masks(image, masks, colors, alpha=0.5):
+    """Add transparent colored mask to an image.
+
+    Args:
+        image: `np.ndarray`, the image of shape (width, height, channel) or (width, height).
+        masks: `np.ndarray`, the mask of shape (n, width, height).
+        colors: list, a list of RGB colors (from 0 to 1).
+        alpha: float, transparency to apply to masks.
+
+    Returns:
+        `np.ndarray`
+    """
+
+    if image.dtype != "uint8":
+        raise Exception("The image needs to be of type uint8. "
+                        f"Current type is: {image.dtype}.")
+
+    image = image.copy()
+    image = image / 255
+
+    colored = np.zeros(image.shape, dtype="float32")
+
+    if image.ndim == 2:
+        image = np.stack([image, image, image], axis=-1)
+
+    for color, mask in zip(colors, masks):
+
+        rgb_mask = np.stack([mask, mask, mask], axis=-1)
+        rgb_mask = rgb_mask.astype('float32') * alpha
+
+        colored = np.ones(image.shape, dtype='float32') * color
+        image = colored * rgb_mask + image * (1 - rgb_mask)
+
+    image = image * 255
+    return image.astype("uint8")

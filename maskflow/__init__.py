@@ -14,6 +14,8 @@ from . import utils
 from . import mask
 from . import bbox
 
+from .test import run_all_tests
+
 
 def setup_logging():
     """Set logging.

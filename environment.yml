@@ -16,7 +16,7 @@ dependencies:
     - pycocotools
     - tqdm
     - jupyterlab
-    - nose
+    - pytest
     - pandas
     - pyyaml
     - pylint
