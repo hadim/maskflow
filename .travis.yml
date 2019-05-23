@@ -29,5 +29,6 @@ install:
 
 script:
   - conda activate conda_env
+  - which python
   - python setup.py install
   - nosetests -v -s .
