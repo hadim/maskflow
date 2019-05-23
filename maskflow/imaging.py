@@ -1,6 +1,3 @@
-import base64
-from io import BytesIO
-
 import tensorflow as tf
 import numpy as np
 

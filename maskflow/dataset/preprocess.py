@@ -1,5 +1,3 @@
-import tensorflow as tf
-
 from . import pad_first_dimension
 
 
