@@ -95,7 +95,7 @@ def blend_image_with_masks(image, masks, colors, alpha=0.5):
         rgb_mask = np.stack([mask, mask, mask], axis=-1)
         rgb_mask = rgb_mask.astype('float32') * alpha
 
-        colored = np.ones(image.shape, dtype='float32') * color
+        colored = np.ones(image.shape, dtype='float32') * color[:3]
         image = colored * rgb_mask + image * (1 - rgb_mask)
 
     image = image * 255

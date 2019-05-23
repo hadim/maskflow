@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
+from . import imaging
+
 
 def compute_colors_for_labels(labels):
     """Simple function that adds fixed colors depending on the class
@@ -138,9 +140,6 @@ def draw_image(image,
     colors = compute_colors_for_labels(np.arange(len(class_names)))
     drawn_image = image.copy()
 
-    w, h = image.shape[:2]
-    colored_masks = np.zeros((w, h, 3), dtype="uint8")
-
     for i in range(len(label_ids)):
 
         label_id = label_ids[i]
@@ -159,20 +158,13 @@ def draw_image(image,
             y = int(bbox[0])
             drawn_image = cv2.putText(drawn_image, text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.2, color=color, thickness=text_line_thickness)
 
-        if draw_mask:
-            # TODO: drawing mask is not optimal.
-            mask = masks[i]
-            colored_mask = np.zeros((w, h, 3), dtype="uint8")
-            colored_mask[np.where(mask)] = color[:3] * 255
-            colored_masks = cv2.addWeighted(colored_mask, 1, colored_masks, 1, 0)
-
         if draw_contour:
             mask = masks[i]
             contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
             drawn_image = cv2.drawContours(drawn_image, contours, -1, color, thickness=contour_line_thickness)
 
     if draw_mask:
-        drawn_image = cv2.addWeighted(drawn_image, 1, colored_masks, mask_alpha, 0)
+        drawn_image = imaging.blend_image_with_masks(image, masks, colors, alpha=mask_alpha)
 
     return drawn_image
 
