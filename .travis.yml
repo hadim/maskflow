@@ -2,14 +2,22 @@ dist: xenial
 language: c
 
 matrix:
-  fast_finish: true
+  matrix:
+    fast_finish: true
+
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+            - libstdc++6
 
 env:
   - PYTHON_VERSION="3.6"
   - PYTHON_VERSION="3.7"
-
-os:
-  - linux
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
