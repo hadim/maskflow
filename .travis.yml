@@ -1,4 +1,5 @@
 dist: xenial
+language: c
 
 matrix:
   fast_finish: true
@@ -29,6 +30,5 @@ install:
 
 script:
   - conda activate conda_env
-  - which python
   - python setup.py install
   - nosetests -v -s .
