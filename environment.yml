@@ -23,6 +23,7 @@ dependencies:
     - mypy
     - importlib_resources
     - pep8
+    - requests
     # Tensorflow dependencies
     - protobuf
     - absl-py
@@ -35,6 +36,8 @@ dependencies:
     - werkzeug
     - markdown
     - grpcio
+    # Tensorflow datasets dependencies
+    - promise
     #- pip:
         #- pip install --no-deps keras_preprocessing keras_applications tensorflow-estimator tensorflow-datasets
         #- pip install --no-deps tensorflow==2.0.0-alpha0 tensorboard
