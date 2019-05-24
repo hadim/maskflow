@@ -39,7 +39,8 @@ dependencies:
     # Tensorflow datasets dependencies
     - promise
     #- pip:
-        #- pip install --no-deps keras_preprocessing keras_applications tensorflow-estimator tensorflow-datasets
+        #- pip install --no-deps keras_preprocessing keras_applications
+        #- pip install --no-deps tensorflow-estimator tensorflow-datasets tensorflow_metadata
         #- pip install --no-deps tensorflow==2.0.0-alpha0 tensorboard
         # or
         #- pip install --no-deps tensorflow-gpu==2.0.0-alpha0 tensorboard
