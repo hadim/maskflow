@@ -24,6 +24,7 @@ dependencies:
     - importlib_resources
     - pep8
     - requests
+    - ipywidgets
     # Tensorflow dependencies
     - protobuf
     - absl-py
@@ -38,6 +39,7 @@ dependencies:
     - grpcio
     # Tensorflow datasets dependencies
     - promise
+    - dill
     #- pip:
         #- pip install --no-deps keras_preprocessing keras_applications
         #- pip install --no-deps tensorflow-estimator tensorflow-datasets tensorflow_metadata
