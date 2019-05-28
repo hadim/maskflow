@@ -6,6 +6,9 @@ DATASET:
 
   # Size of the image.
   IMAGE_SIZE: 128
+  
+  # Number of channels.
+  N_CHANNELS: 3
 
   # Values to be used for image normalization
   PIXEL_MEAN: [102.9801, 115.9465, 122.7717]

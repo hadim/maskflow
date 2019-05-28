@@ -2,7 +2,7 @@
 # https://github.com/tensorflow/tpu/blob/b26a9244d326136c565968748d4475d366d1287d/models/official/resnet/resnet_model.py
 
 import tensorflow as tf
-import tensorflow.keras.layers as layers
+from tensorflow.keras import layers
 
 
 _BATCH_NORM_DECAY = 0.997
@@ -58,10 +58,11 @@ class ConvNormReLuPool(tf.keras.layers.Layer):
                  data_format='channels_last'):
 
         super().__init__(name=name)
-        self.conv = layers.Conv2D(filters=filters, kernel_size=kernel_size, strides=strides, padding=padding)
+        self.conv = layers.Conv2D(filters=filters, kernel_size=kernel_size, strides=strides,
+                                  padding=padding, data_format=data_format)
         self.bn_relu = BatchNormRelu(init_zero=init_zero, do_relu=do_relu, data_format=data_format)
-        self.pool = layers.MaxPooling2D(pool_size=pool_size, strides=pool_strides, padding=pool_padding)
-
+        self.pool = layers.MaxPool2D(pool_size=pool_size, strides=pool_strides, padding=pool_padding,
+                                     data_format=data_format)
 
     def call(self, input_tensor, training=False):
         x = self.conv(input_tensor)
@@ -70,7 +71,7 @@ class ConvNormReLuPool(tf.keras.layers.Layer):
         return x
 
 
-class ClassifyBlock(tf.keras.layers.Layer):
+class ClassifierBlock(tf.keras.layers.Layer):
     """Do Average Pooling -> FC -> Activation (softmax).
     """
 
@@ -101,12 +102,15 @@ class ResidualBlock(tf.keras.layers.Layer):
         self.projection = None
         if use_projection:
             # Projection shortcut in first layer to match filters and strides
-            self.projection = layers.Conv2D(filters=filters, kernel_size=1, strides=strides, padding='same')
+            self.projection = layers.Conv2D(filters=filters, kernel_size=1, strides=strides,
+                                            padding='same', data_format=data_format)
 
-        self.conv_1 = layers.Conv2D(filters=filters, kernel_size=3, strides=strides, padding='same')
+        self.conv_1 = layers.Conv2D(filters=filters, kernel_size=3, strides=strides,
+                                    padding='same', data_format=data_format)
 
         self.bn_relu_2 = BatchNormRelu(init_zero=False, do_relu=True, data_format=data_format)
-        self.conv_2 = layers.Conv2D(filters=filters, kernel_size=3, strides=1, padding='same')
+        self.conv_2 = layers.Conv2D(filters=filters, kernel_size=3, strides=1,
+                                    padding='same', data_format=data_format)
 
     def call(self, input_tensor, training=False):
 
@@ -134,15 +138,19 @@ class BottleneckBlock(tf.keras.layers.Layer):
             # Projection shortcut only in first block within a group. Bottleneck blocks
             # end with 4 times the number of filters.
             filters_out = 4 * filters
-            self.projection = layers.Conv2D(filters=filters_out, kernel_size=1, strides=strides, padding='same')
+            self.projection = layers.Conv2D(filters=filters_out, kernel_size=1, strides=strides,
+                                            padding='same', data_format=data_format)
 
-        self.conv_1 = layers.Conv2D(filters=filters, kernel_size=1, strides=1, padding='same')
+        self.conv_1 = layers.Conv2D(filters=filters, kernel_size=1, strides=1,
+                                    padding='same', data_format=data_format)
 
         self.bn_relu_2 = BatchNormRelu(init_zero=False, do_relu=True, data_format=data_format)
-        self.conv_2 = layers.Conv2D(filters=filters, kernel_size=3, strides=strides, padding='same')
+        self.conv_2 = layers.Conv2D(filters=filters, kernel_size=3, strides=strides,
+                                    padding='same', data_format=data_format)
 
         self.bn_relu_3 = BatchNormRelu(init_zero=False, do_relu=True, data_format=data_format)
-        self.conv_3 = layers.Conv2D(filters=4 * filters, kernel_size=1, strides=1, padding='same')
+        self.conv_3 = layers.Conv2D(filters=4 * filters, kernel_size=1, strides=1,
+                                    padding='same', data_format=data_format)
 
     def call(self, input_tensor, training=False):
 
@@ -201,7 +209,8 @@ class ResNet(tf.keras.Model):
             width]` or "channels_last for `[batch, height, width, channels]`.
     """
 
-    def __init__(self, size=50, num_classes=10, include_top=True, activation='softmax', data_format='channels_last', **kwargs):
+    def __init__(self, size=50, num_classes=10, include_top=True,
+                 activation='softmax', data_format='channels_last', **kwargs):
 
         super().__init__(name=f'ResNet_{size}', **kwargs)
 
@@ -234,11 +243,11 @@ class ResNet(tf.keras.Model):
         self.c5 = BlockGroup(filters=512, strides=2, n_blocks=n_layers[3], block_fn=block_fn,
                              data_format=data_format, name='block_group_5')
 
-        self.classify = None
+        self.classifier = None
         if include_top:
             fc_length = 512 if block_fn == ResidualBlock else 2048
-            self.classify = ClassifyBlock(num_classes, fc_length=fc_length, activation=activation,
-                                          name='classify_block', data_format=data_format)
+            self.classifier = ClassifierBlock(num_classes, fc_length=fc_length, activation=activation,
+                                              name='classify_block', data_format=data_format)
 
 
     def call(self, input_tensor, training=False):
@@ -249,11 +258,11 @@ class ResNet(tf.keras.Model):
         x = self.c4(x, training=training)
         x = self.c5(x, training=training)
 
-        if self.classify:
-            x = self.classify(x, training=training)
+        if self.classifier:
+            x = self.classifier(x, training=training)
+            x = tf.identity(x, name='labels')
 
         return x
-
 
 
 class ResNet18(ResNet):
