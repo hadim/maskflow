@@ -13,6 +13,7 @@ from . import viz
 from . import utils
 from . import mask
 from . import bbox
+from . import model
 
 from .test import run_all_tests
 

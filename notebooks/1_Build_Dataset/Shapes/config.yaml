@@ -7,7 +7,7 @@ DATASET:
   MAX_NUM_INSTANCES: 20
   
   # Size of the image.
-  IMAGE_SIZE: 128
+  IMAGE_SIZE: 224
   
   # Values to be used for image normalization.
   PIXEL_MEAN: [102.9801, 115.9465, 122.7717]

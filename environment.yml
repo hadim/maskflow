@@ -41,12 +41,12 @@ dependencies:
     - promise
     - dill
     #- pip:
-        #- pip install --no-deps keras_preprocessing keras_applications
-        #- pip install --no-deps tensorflow-estimator tensorflow-datasets tensorflow_metadata
-        #- pip install --no-deps tensorflow==2.0.0-alpha0 tensorboard
+        #- pip install --no-deps -U keras_preprocessing keras_applications
+        #- pip install --no-deps -U tensorflow-estimator tensorflow-datasets tensorflow_metadata
+        #- pip install --no-deps -U tensorflow==2.0.0-alpha0 tensorboard
         # or
-        #- pip install --no-deps tensorflow-gpu==2.0.0-alpha0 tensorboard
+        #- pip install --no-deps -U tensorflow-gpu==2.0.0-alpha0 tensorboard
         # or
-        #- pip install --no-deps tf-nightly-cpu-2.0-preview tb-nightly
+        #- pip install --no-deps -U tf-nightly-cpu-2.0-preview tb-nightly
         # or
-        #- pip install --no-deps tf-nightly-2.0-preview tb-nightly
+        #- pip install --no-deps -U tf-nightly-2.0-preview tb-nightly
