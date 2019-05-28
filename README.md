@@ -13,6 +13,7 @@ The framework aims to be:
 - **universal**: You should be able to predict labels, bounding boxes, masks. Moreover why do we have to restrict to those when you can predict any kind of polygon describing your objects (*polygon detections is not yet implemented*)?
 - **easy-to-deploy**: Deploy your model using Docker and run inference by sending REST calls to it.
 - **test-driven**: Maskflow development is test-driven in order to provide a robust and stable API.
+- **API first**: Maskflow is library providing an API and not a software. A software n be built on top of Maskflow (see Maskflow Fiji plugin).
 
 As Maskflow is originally designed for biological images, it comes with a [Fiji plugin](https://github.com/hadim/maskflow-fiji) that can run a model previously trained (*the plugin will be available very soon*).
 
