@@ -35,6 +35,7 @@ dependencies:
     - wrapt
     - keras-preprocessing
     - keras-applications
+    - tensorflow-estimator
     # Tensorboard dependencies
     - werkzeug
     - markdown
@@ -44,7 +45,7 @@ dependencies:
     - dill
     #- pip:
         # Install TF deps not available on Conda.
-        #- pip install --no-deps -U tensorflow-estimator tensorflow-datasets tensorflow_metadata
+        #- pip install --no-deps -U tensorflow-datasets tensorflow_metadata
         # Install TF (from nightly or not).
         #- pip install --no-deps -U tensorflow==2.0.0-alpha0 tensorboard
         # or
