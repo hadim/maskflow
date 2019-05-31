@@ -65,9 +65,10 @@ class ConvNormReLuPool(tf.keras.layers.Layer):
                                      data_format=data_format)
 
     def call(self, input_tensor, training=False):
-        x = self.conv(input_tensor)
-        x = self.bn_relu(x, training=training)
-        x = self.pool(x)
+        with tf.name_scope(self.name):
+            x = self.conv(input_tensor)
+            x = self.bn_relu(x, training=training)
+            x = self.pool(x)
         return x
 
 
@@ -87,9 +88,10 @@ class ClassifierBlock(tf.keras.layers.Layer):
         self.dense = layers.Dense(units=num_classes, activation=activation, kernel_initializer=kernel_initializer)
 
     def call(self, input_tensor, training=False):
-        x = self.average_pool(input_tensor)
-        x = tf.reshape(x, [-1, self.fc_length])
-        x = self.dense(x)
+        with tf.name_scope("ClassifierBlock"):
+            x = self.average_pool(input_tensor)
+            x = tf.reshape(x, [-1, self.fc_length])
+            x = self.dense(x)
         return x
 
 
@@ -114,17 +116,19 @@ class ResidualBlock(tf.keras.layers.Layer):
 
     def call(self, input_tensor, training=False):
 
-        shortcut = input_tensor
-        x = self.bn_relu_1(input_tensor, training=training)
+        with tf.name_scope("ResidualBlock"):
+            shortcut = input_tensor
+            x = self.bn_relu_1(input_tensor, training=training)
 
-        if self.projection:
-            shortcut = self.projection(x)
+            if self.projection:
+                shortcut = self.projection(x)
 
-        x = self.conv_1(x)
-        x = self.bn_relu_2(x, training=training)
-        x = self.conv_2(x)
+            x = self.conv_1(x)
+            x = self.bn_relu_2(x, training=training)
+            x = self.conv_2(x)
+            x = x + shortcut
 
-        return x + shortcut
+        return x
 
 
 class BottleneckBlock(tf.keras.layers.Layer):
@@ -154,19 +158,22 @@ class BottleneckBlock(tf.keras.layers.Layer):
 
     def call(self, input_tensor, training=False):
 
-        shortcut = input_tensor
-        x = self.bn_relu_1(input_tensor, training=training)
+        with tf.name_scope("BottleneckBlock"):
 
-        if self.projection:
-            shortcut = self.projection(x)
+            shortcut = input_tensor
+            x = self.bn_relu_1(input_tensor, training=training)
 
-        x = self.conv_1(x)
-        x = self.bn_relu_2(x, training=training)
-        x = self.conv_2(x)
-        x = self.bn_relu_3(x, training=training)
-        x = self.conv_3(x)
+            if self.projection:
+                shortcut = self.projection(x)
 
-        return x + shortcut
+            x = self.conv_1(x)
+            x = self.bn_relu_2(x, training=training)
+            x = self.conv_2(x)
+            x = self.bn_relu_3(x, training=training)
+            x = self.conv_3(x)
+            x = x + shortcut
+
+        return x
 
 
 class BlockGroup(tf.keras.layers.Layer):
@@ -186,9 +193,10 @@ class BlockGroup(tf.keras.layers.Layer):
             self.blocks.append(block)
 
     def call(self, input_tensor, training=False):
-        x = self.first_block(input_tensor, training=training)
-        for block in self.blocks:
-            x = block(x, training=training)
+        with tf.name_scope(self.name):
+            x = self.first_block(input_tensor, training=training)
+            for block in self.blocks:
+                x = block(x, training=training)
         return x
 
 
@@ -228,8 +236,11 @@ class ResNet(tf.keras.Model):
         block_fn = params[size]['block']
         n_layers = params[size]['layers']
 
-        self.c1 = ConvNormReLuPool(filters=64, kernel_size=7, strides=2, padding='same', init_zero=False,
-                                   do_relu=True, pool_size=3, pool_strides=2, pool_padding='same', name='block_group_1')
+
+        self.c1 = ConvNormReLuPool(filters=64, kernel_size=7, strides=2,
+                                    padding='same', init_zero=False,
+                                    do_relu=True, pool_size=3, pool_strides=2,
+                                    pool_padding='same', name='block_group_1')
 
         self.c2 = BlockGroup(filters=64, strides=1, n_blocks=n_layers[0], block_fn=block_fn,
                              data_format=data_format, name='block_group_2')
