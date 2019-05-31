@@ -61,7 +61,7 @@ def _decode_masks(feature):
     # See https://github.com/tensorflow/tensorflow/issues/28953
 
     def _decode_image_fn(encoded_image):
-        image = tf.image.decode_image(encoded_image, channel=1)
+        image = tf.image.decode_image(encoded_image, channels=1)
 
         #image_shape = tf.TensorShape([feature['image_width'], feature['image_height'], 1])
         #image.set_shape(image_shape)
@@ -84,7 +84,9 @@ def _prune_features(feature):
     return feature
 
 
-def parse(tfrecord_path, config, do_preprocess=True,
+def parse(tfrecord_path, config, shuffle=False, repeat_count=1,
+          shuffle_buffer_size=1000, do_preprocess=True,
+          num_parallel_calls=None,
           with_bboxes=True, with_label_names=True,
           with_label_ids=True, with_masks=True):
     """Parse a Maskflow TFRecord file following those steps:
@@ -96,11 +98,14 @@ def parse(tfrecord_path, config, do_preprocess=True,
     - Remove unused data (encoded image and masks for example).
     - Preprocess the data, see `maskflow.dataset.preprocess_dataset`.
 
-
     Args:
         tfrecord_path: `str`, path to TFRecord file.
         config: `dict`, Maskflow dataset and model parameters.
+        shuffle: `bool`, whether to shuffle the dataset.
+        repeat_count: `int`, repeat count.
+        shuffle_buffer_size: `int`, `buffer_size` for `shuffle()`.
         do_preprocess: `bool`, whether to preprocess the dataset.
+        num_parallel_calls: `int`, used in `.map()` functions.
         with_bboxes: `bool`, parse bounding boxes.
         with_label_names: `bool`, parse label names.
         with_label_ids: `bool`, parse label indices.
@@ -110,27 +115,37 @@ def parse(tfrecord_path, config, do_preprocess=True,
         tf.data.Dataset
     """
 
+    if not num_parallel_calls:
+        num_parallel_calls = tf.data.experimental.AUTOTUNE
+
     dataset = tf.data.TFRecordDataset(str(tfrecord_path))
+
+    # Shuffle the dataset
+    if shuffle:
+        dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
+
+    # Repeat the dataset
+    dataset = dataset.repeat(count=repeat_count)
 
     # Parse TFRecord file.
     _feature_parser_fn = _parse_tfrecord(with_bboxes, with_label_names,
                                          with_label_ids, with_masks)
-    dataset = dataset.map(_feature_parser_fn)
+    dataset = dataset.map(_feature_parser_fn, num_parallel_calls=num_parallel_calls)
 
     # Convert `image_encoded` to a Tensor.
-    dataset = dataset.map(_decode_image)
+    dataset = dataset.map(_decode_image, num_parallel_calls=num_parallel_calls)
 
     # Convert `masks_encoded` to a Tensor.
     if with_masks:
-        dataset = dataset.map(_decode_masks)
+        dataset = dataset.map(_decode_masks, num_parallel_calls=num_parallel_calls)
 
     # Convert bboxes informations to a Tensor of (x, y, w, h).
-    dataset = dataset.map(_decode_bounding_boxes)
+    dataset = dataset.map(_decode_bounding_boxes, num_parallel_calls=num_parallel_calls)
 
     # Prune useless features.
-    dataset = dataset.map(_prune_features)
+    dataset = dataset.map(_prune_features, num_parallel_calls=num_parallel_calls)
 
     if do_preprocess:
-        dataset = preprocess_dataset(dataset, config['DATASET']['MAX_NUM_INSTANCES'])
+        dataset = preprocess_dataset(dataset, config['DATASET']['MAX_NUM_INSTANCES'], num_parallel_calls)
 
     return dataset

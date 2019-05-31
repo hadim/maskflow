@@ -15,7 +15,7 @@ def _pad_dataset(max_num_instances):
     return _fn
 
 
-def preprocess_dataset(dataset, max_num_instances):
+def preprocess_dataset(dataset, max_num_instances, num_parallel_calls):
     """Preprocess a Maskflow dataset.
 
     - Padding values using `max_num_instances` bboxes, label_ids,
@@ -24,12 +24,13 @@ def preprocess_dataset(dataset, max_num_instances):
     Args:
         dataset: `tf.data.Dataset`, a dataset.
         max_num_instances: `int`, Number to pad data with.
+        num_parallel_calls: `int`, used in `.map()` functions.
 
     Returns:
         tf.data.Dataset
     """
 
     _pad_dataset_fn = _pad_dataset(max_num_instances)
-    dataset = dataset.map(_pad_dataset_fn)
+    dataset = dataset.map(_pad_dataset_fn, num_parallel_calls=num_parallel_calls)
 
     return dataset
