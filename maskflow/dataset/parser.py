@@ -58,10 +58,17 @@ def _decode_masks(feature):
     """
     # TODO: the current function fails when there is no mask in
     # feature['masks_encoded']. It should work on empty an tensor.
-    # See TODO SNIPPET TO REPRODUCE
-    encoded_masks = feature['masks_encoded']
-    feature['masks'] = tf.map_fn(lambda x: tf.image.decode_image(x, channels=1),
-                                 encoded_masks, dtype=tf.uint8)
+    # See https://github.com/tensorflow/tensorflow/issues/28953
+
+    def _decode_image_fn(encoded_image):
+        image = tf.image.decode_image(encoded_image, channel=1)
+
+        #image_shape = tf.TensorShape([feature['image_width'], feature['image_height'], 1])
+        #image.set_shape(image_shape)
+        return image
+
+    feature['masks'] = tf.map_fn(_decode_image_fn, feature['masks_encoded'], dtype=tf.uint8)
+
     # Remove the channel dimension (always equal to 1).
     feature['masks'] = feature['masks'][:, :, :, 0]
     return feature

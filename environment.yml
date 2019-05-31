@@ -25,6 +25,7 @@ dependencies:
     - pep8
     - requests
     - ipywidgets
+    - gpustat
     # Tensorflow dependencies
     - protobuf
     - absl-py
@@ -47,11 +48,11 @@ dependencies:
         # Install TF deps not available on Conda.
         #- pip install --no-deps -U tensorflow-datasets tensorflow_metadata
         # Install TF (from nightly or not).
-        #- pip install --no-deps -U tensorflow==2.0.0-alpha0 tensorboard
+        #- pip install --no-deps -U tensorflow-gpu==2.0.0-alpha0 tensorboard
         # or
         #- pip install --no-deps -U tensorflow-cpu==2.0.0-alpha0 tensorboard
         # or
-        #- pip install --no-deps -U tf-nightly-2.0-preview tb-nightly
+        #- pip install --no-deps -U tf-nightly-gpu-2.0-preview tb-nightly
         # or
         #- pip install --no-deps -U tf-nightly-cpu-2.0-preview tb-nightly
 
