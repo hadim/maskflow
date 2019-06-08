@@ -46,13 +46,13 @@ dependencies:
     - dill
     #- pip:
         # Install TF deps not available on Conda.
-        #- pip install --no-deps -U tensorflow-datasets tensorflow_metadata
+        #- pip install --no-deps -U tensorflow-datasets tensorflow_metadata tensorboard
         # Install TF (from nightly or not).
-        #- pip install --no-deps -U tensorflow-gpu==2.0.0-alpha0 tensorboard
+        #- pip install --no-deps -U tensorflow-gpu==2.0.0-beta0
         # or
-        #- pip install --no-deps -U tensorflow-cpu==2.0.0-alpha0 tensorboard
+        #- pip install --no-deps -U tensorflow-cpu==2.0.0-beta0
         # or
-        #- pip install --no-deps -U tf-nightly-gpu-2.0-preview tb-nightly
+        #- pip install --no-deps -U tf-nightly-gpu-2.0-preview
         # or
-        #- pip install --no-deps -U tf-nightly-cpu-2.0-preview tb-nightly
+        #- pip install --no-deps -U tf-nightly-cpu-2.0-preview
 
