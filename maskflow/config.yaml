@@ -11,14 +11,14 @@ DATASET:
   N_CHANNELS: 3
 
   # Values to be used for image normalization
-  PIXEL_MEAN: [102.9801, 115.9465, 122.7717]
+  PIXEL_MEAN: [123.68, 116.28, 103.53]
 
   # Values to be used for image normalization
-  PIXEL_STD: [1., 1., 1.]
+  PIXEL_STD: [58.40, 57.12, 57.38]
 
 MODEL:
   BACKBONE:
-    NAME: 'resnet'
+    NAME: 'efficientnet'
     RESNET_DEPTH: 50
     MIN_LEVEL: 3
     MAX_LEVEL: 7
