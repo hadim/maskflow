@@ -1,12 +1,12 @@
 DATASET:
-  CLASS_NAMES: ["object_1"]
+  CLASS_NAMES: ['object_1']
 
   # Maximum number of objects detected per image.
   MAX_NUM_INSTANCES: 200
 
   # Size of the image.
   IMAGE_SIZE: 128
-  
+
   # Number of channels.
   N_CHANNELS: 3
 
@@ -17,9 +17,8 @@ DATASET:
   PIXEL_STD: [1., 1., 1.]
 
 MODEL:
-
   BACKBONE:
-    NAME: "resnet"
+    NAME: 'resnet'
     RESNET_DEPTH: 50
     MIN_LEVEL: 3
     MAX_LEVEL: 7

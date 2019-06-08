@@ -1,4 +1,4 @@
-# Usqge: `conda env update -f environment.yml`
+# Usage: `conda env update -f environment.yml`
 channels:
   - conda-forge
 
@@ -16,16 +16,16 @@ dependencies:
     - pycocotools
     - tqdm
     - jupyterlab
-    - pytest
     - pandas
     - pyyaml
-    - pylint
-    - mypy
     - importlib_resources
-    - pep8
     - requests
     - ipywidgets
     - gpustat
+    - pytest
+    - flake8
+    - pylint
+    - autopep8
     # Tensorflow dependencies
     - protobuf
     - absl-py

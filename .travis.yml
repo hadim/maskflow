@@ -40,10 +40,11 @@ install:
   - conda create -n conda_env python=$PYTHON_VERSION
   - conda activate conda_env
   - conda env update -f "environment.yml"
-  - pip install --no-deps keras_preprocessing keras_applications tensorflow-estimator tensorflow-datasets
-  - pip install --no-deps tf-nightly-2.0-preview tb-nightly
+  - pip install --no-deps -U tensorflow-datasets tensorflow_metadata tensorboard
+  - pip install --no-deps tensorflow==2.0.0-beta0
 
 script:
   - conda activate conda_env
+  - pylint maskflow/
   - python setup.py install
   - python -c "import maskflow; maskflow.run_all_tests()"
