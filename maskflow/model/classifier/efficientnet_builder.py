@@ -3,6 +3,9 @@
 
 import os
 import re
+import sys
+import logging
+
 import tensorflow as tf
 
 from . import efficientnet_model
@@ -137,8 +140,8 @@ def get_model_params(model_name, override_params):
     # in global_params.
     global_params = global_params._replace(**override_params)
 
-  tf.logging.info('global_params= %s', global_params)
-  tf.logging.info('blocks_args= %s', blocks_args)
+  logging.info(f'global_params= {global_params}')
+  logging.info(f'blocks_args= {blocks_args}')
   return blocks_args, global_params
 
 
@@ -172,7 +175,7 @@ def build_model(images,
     param_file = os.path.join(model_dir, 'model_params.txt')
     if not tf.gfile.Exists(param_file):
       with tf.gfile.GFile(param_file, 'w') as f:
-        tf.logging.info('writing to %s' % param_file)
+        logging.info(f'writing to {param_file}')
         f.write('model_name= %s\n\n' % model_name)
         f.write('global_params= %s\n\n' % str(global_params))
         f.write('blocks_args= %s\n\n' % str(blocks_args))
@@ -185,30 +188,37 @@ def build_model(images,
   return logits, model.endpoints
 
 
-def build_model_base(images, model_name, training, override_params=None):
+def build_model_base(model_name, num_classes, log=True):
   """A helper functiion to create a base model and return global_pool.
 
   Args:
-    images: input images tensor.
     model_name: string, the model name of a pre-defined MnasNet.
-    training: boolean, whether the model is constructed for training.
-    override_params: A dictionary of params for overriding. Fields must exist in
-      mnasnet_model.GlobalParams.
+    num_classes: int, number of classes.
+    log: boolean, enable loggin during model build.
 
   Returns:
-    features: global pool features.
+    model: Keras model.
     endpoints: the endpoints for each layer.
 
   Raises:
     When model_name specified an undefined model, raises NotImplementedError.
     When override_params has invalid fields, raises ValueError.
   """
-  assert isinstance(images, tf.Tensor)
+
+  if log:
+    logging.disable(logging.NOTSET)
+  else:
+    logging.disable(sys.maxsize)
+
+  override_params = {}
+  override_params["num_classes"] = num_classes
+
   blocks_args, global_params = get_model_params(model_name, override_params)
 
-  with tf.variable_scope(model_name):
-    model = efficientnet_model.Model(blocks_args, global_params)
-    features = model(images, training=training, features_only=True)
+  with tf.name_scope(model_name):
+    model = efficientnet_model.Model(blocks_args, global_params, log=log)
 
-  features = tf.identity(features, 'global_pool')
-  return features, model.endpoints
+  if not log:
+    logging.disable(logging.NOTSET)
+
+  return model

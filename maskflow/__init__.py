@@ -15,13 +15,20 @@ from . import utils
 from . import mask
 from . import bbox
 from . import model
+from . import train
 
 
-def setup_logging():
+def setup_logging(log_path=None):
   """Set logging.
   """
-  formatter = logging.Formatter(
-      "%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+
+  # Reset previous loggers
+  for h in logging.getLogger().handlers:
+    logging.root.removeHandler(h)
+  for f in logging.getLogger().filters:
+    logging.root.removeFilter(f)
+
+  formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
   root_logger = logging.getLogger()
   root_logger.setLevel(logging.INFO)
 
@@ -29,10 +36,11 @@ def setup_logging():
   console_handler.setFormatter(formatter)
   root_logger.addHandler(console_handler)
 
-  # # Log to a file.
-  # file_handler = logging.FileHandler(log_path)
-  # file_handler.setFormatter(formatter)
-  # root_logger.addHandler(file_handler)
+  # Log to a file.
+  if log_path:
+    file_handler = logging.FileHandler(log_path)
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
 
 
 setup_logging()

@@ -1,17 +1,4 @@
-# Copyright 2019 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
+# From https://github.com/tensorflow/tpu/tree/39e2239ab5624f1f31b903b315387a8a642b503d/models/official/efficientnet
 """Contains definitions for EfficientNet model.
 
 [1] Mingxing Tan, Quoc V. Le
@@ -19,17 +6,15 @@
   ICML'19, https://arxiv.org/abs/1905.11946
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import collections
 import math
+import sys
+import logging
+
 import numpy as np
-import six
 import tensorflow as tf
 
-import utils
+from . import efficientnet_utils as utils
 
 GlobalParams = collections.namedtuple('GlobalParams', [
     'batch_norm_momentum', 'batch_norm_epsilon', 'dropout_rate', 'data_format',
@@ -38,9 +23,9 @@ GlobalParams = collections.namedtuple('GlobalParams', [
 ])
 GlobalParams.__new__.__defaults__ = (None,) * len(GlobalParams._fields)
 
-# batchnorm = tf.layers.BatchNormalization
-batchnorm = utils.TpuBatchNormalization  # TPU-specific requirement.
-relu_fn = tf.nn.swish
+batchnorm = tf.keras.layers.BatchNormalization  # pylint: disable=invalid-name
+# batchnorm = utils.TpuBatchNormalization  # TPU-specific requirement.
+relu_fn = utils.Swish()
 
 
 BlockArgs = collections.namedtuple('BlockArgs', [
@@ -72,8 +57,7 @@ def conv_kernel_initializer(shape, dtype=None, partition_info=None):
   del partition_info
   kernel_height, kernel_width, _, out_filters = shape
   fan_out = int(kernel_height * kernel_width * out_filters)
-  return tf.random_normal(
-      shape, mean=0.0, stddev=np.sqrt(2.0 / fan_out), dtype=dtype)
+  return tf.random.normal(shape, mean=0.0, stddev=np.sqrt(2.0 / fan_out), dtype=dtype)
 
 
 def dense_kernel_initializer(shape, dtype=None, partition_info=None):
@@ -94,7 +78,7 @@ def dense_kernel_initializer(shape, dtype=None, partition_info=None):
   """
   del partition_info
   init_range = 1.0 / np.sqrt(shape[1])
-  return tf.random_uniform(shape, -init_range, init_range, dtype=dtype)
+  return tf.random.uniform(shape, -init_range, init_range, dtype=dtype)
 
 
 def round_filters(filters, global_params):
@@ -112,8 +96,7 @@ def round_filters(filters, global_params):
   # Make sure that round down does not go down by more than 10%.
   if new_filters < 0.9 * filters:
     new_filters += divisor
-  tf.logging.info(
-      'round_filter input={} output={}'.format(orig_f, new_filters))
+  logging.info(f'round_filter input={orig_f} output={new_filters}')
   return int(new_filters)
 
 
@@ -166,7 +149,7 @@ class MBConvBlock():
     filters = self._block_args.input_filters * self._block_args.expand_ratio
     if self._block_args.expand_ratio != 1:
       # Expansion phase:
-      self._expand_conv = tf.layers.Conv2D(
+      self._expand_conv = tf.keras.layers.Conv2D(
           filters,
           kernel_size=[1, 1],
           strides=[1, 1],
@@ -180,7 +163,7 @@ class MBConvBlock():
 
     kernel_size = self._block_args.kernel_size
     # Depth-wise convolution phase:
-    self._depthwise_conv = utils.DepthwiseConv2D(
+    self._depthwise_conv = tf.keras.layers.DepthwiseConv2D(
         [kernel_size, kernel_size],
         strides=self._block_args.strides,
         depthwise_initializer=conv_kernel_initializer,
@@ -195,14 +178,14 @@ class MBConvBlock():
       num_reduced_filters = max(
           1, int(self._block_args.input_filters * self._block_args.se_ratio))
       # Squeeze and Excitation layer.
-      self._se_reduce = tf.layers.Conv2D(
+      self._se_reduce = tf.keras.layers.Conv2D(
           num_reduced_filters,
           kernel_size=[1, 1],
           strides=[1, 1],
           kernel_initializer=conv_kernel_initializer,
           padding='same',
           use_bias=True)
-      self._se_expand = tf.layers.Conv2D(
+      self._se_expand = tf.keras.layers.Conv2D(
           filters,
           kernel_size=[1, 1],
           strides=[1, 1],
@@ -212,7 +195,7 @@ class MBConvBlock():
 
     # Output phase:
     filters = self._block_args.output_filters
-    self._project_conv = tf.layers.Conv2D(
+    self._project_conv = tf.keras.layers.Conv2D(
         filters,
         kernel_size=[1, 1],
         strides=[1, 1],
@@ -235,8 +218,7 @@ class MBConvBlock():
     """
     se_tensor = tf.reduce_mean(input_tensor, self._spatial_dims, keepdims=True)
     se_tensor = self._se_expand(relu_fn(self._se_reduce(se_tensor)))
-    tf.logging.info('Built Squeeze and Excitation with tensor shape: %s' %
-                    (se_tensor.shape))
+    logging.info(f'Built Squeeze and Excitation with tensor shape: {se_tensor.shape}')
     return tf.sigmoid(se_tensor) * input_tensor
 
   def call(self, inputs, training=True, drop_connect_rate=None):
@@ -250,18 +232,18 @@ class MBConvBlock():
     Returns:
       A output tensor.
     """
-    tf.logging.info('Block input: %s shape: %s' % (inputs.name, inputs.shape))
+    logging.info(f'Block input: {inputs} shape: {inputs.shape}')
     if self._block_args.expand_ratio != 1:
       x = relu_fn(self._bn0(self._expand_conv(inputs), training=training))
     else:
       x = inputs
-    tf.logging.info('Expand: %s shape: %s' % (x.name, x.shape))
+    logging.info(f'Expand: {x} shape: {x.shape}')
 
     x = relu_fn(self._bn1(self._depthwise_conv(x), training=training))
-    tf.logging.info('DWConv: %s shape: %s' % (x.name, x.shape))
+    logging.info(f'DWConv: {x} shape: {x.shape}')
 
     if self.has_se:
-      with tf.variable_scope('se'):
+      with tf.name_scope('se'):
         x = self._call_se(x)
 
     self.endpoints = {'expansion_output': x}
@@ -275,7 +257,7 @@ class MBConvBlock():
         if drop_connect_rate:
           x = utils.drop_connect(x, training, drop_connect_rate)
         x = tf.add(x, inputs)
-    tf.logging.info('Project: %s shape: %s' % (x.name, x.shape))
+    logging.info(f'Project: {x} shape: {x.shape}')
     return x
 
 
@@ -286,12 +268,13 @@ class Model(tf.keras.Model):
     Reference: https://arxiv.org/abs/1807.11626
   """
 
-  def __init__(self, blocks_args=None, global_params=None):
+  def __init__(self, blocks_args=None, global_params=None, log=False):
     """Initializes an `Model` instance.
 
     Args:
       blocks_args: A list of BlockArgs to construct block modules.
       global_params: GlobalParams, a set of global parameters.
+      log: boolean, enable loggin during model build.
 
     Raises:
       ValueError: when blocks_args is not specified as a list.
@@ -303,6 +286,7 @@ class Model(tf.keras.Model):
     self._blocks_args = blocks_args
     self.endpoints = None
     self._build()
+    self._log = log
 
   def _build(self):
     """Builds a model."""
@@ -336,7 +320,7 @@ class Model(tf.keras.Model):
       channel_axis = -1
 
     # Stem part.
-    self._conv_stem = tf.layers.Conv2D(
+    self._conv_stem = tf.keras.layers.Conv2D(
         filters=round_filters(32, self._global_params),
         kernel_size=[3, 3],
         strides=[2, 2],
@@ -349,7 +333,7 @@ class Model(tf.keras.Model):
         epsilon=batch_norm_epsilon)
 
     # Head part.
-    self._conv_head = tf.layers.Conv2D(
+    self._conv_head = tf.keras.layers.Conv2D(
         filters=round_filters(1280, self._global_params),
         kernel_size=[1, 1],
         strides=[1, 1],
@@ -363,7 +347,7 @@ class Model(tf.keras.Model):
 
     self._avg_pooling = tf.keras.layers.GlobalAveragePooling2D(
         data_format=self._global_params.data_format)
-    self._fc = tf.layers.Dense(
+    self._fc = tf.keras.layers.Dense(
         self._global_params.num_classes,
         kernel_initializer=dense_kernel_initializer)
 
@@ -384,13 +368,18 @@ class Model(tf.keras.Model):
     Returns:
       output tensors.
     """
+
+    if self._log:
+      logging.disable(logging.NOTSET)
+    else:
+      logging.disable(sys.maxsize)
+
     outputs = None
     self.endpoints = {}
     # Calls Stem layers
-    with tf.variable_scope('stem'):
-      outputs = relu_fn(
-          self._bn0(self._conv_stem(inputs), training=training))
-    tf.logging.info('Built stem layers with output shape: %s' % outputs.shape)
+    with tf.name_scope('stem'):
+      outputs = relu_fn(self._bn0(self._conv_stem(inputs), training=training))
+    logging.info(f'Built stem layers with output shape: {outputs.shape}')
     self.endpoints['stem'] = outputs
 
     # Calls blocks.
@@ -401,18 +390,18 @@ class Model(tf.keras.Model):
         is_reduction = True
         reduction_idx += 1
 
-      with tf.variable_scope('blocks_%s' % idx):
+      with tf.name_scope('blocks_%s' % idx):
         drop_rate = self._global_params.drop_connect_rate
         if drop_rate:
           drop_rate *= float(idx) / len(self._blocks)
-          tf.logging.info('block_%s drop_connect_rate: %s' % (idx, drop_rate))
+          logging.info(f'block_{idx} drop_connect_rate: {drop_rate}')
         outputs = block.call(
             outputs, training=training, drop_connect_rate=drop_rate)
         self.endpoints['block_%s' % idx] = outputs
         if is_reduction:
           self.endpoints['reduction_%s' % reduction_idx] = outputs
         if block.endpoints:
-          for k, v in six.iteritems(block.endpoints):
+          for k, v in block.endpoints.items():
             self.endpoints['block_%s/%s' % (idx, k)] = v
             if is_reduction:
               self.endpoints['reduction_%s/%s' % (reduction_idx, k)] = v
@@ -420,7 +409,7 @@ class Model(tf.keras.Model):
 
     if not features_only:
       # Calls final layers and returns logits.
-      with tf.variable_scope('head'):
+      with tf.name_scope('head'):
         outputs = relu_fn(
             self._bn1(self._conv_head(outputs), training=training))
         outputs = self._avg_pooling(outputs)
@@ -428,4 +417,8 @@ class Model(tf.keras.Model):
           outputs = self._dropout(outputs, training=training)
         outputs = self._fc(outputs)
         self.endpoints['head'] = outputs
+
+    if not self._log:
+      logging.disable(logging.NOTSET)
+
     return outputs
