@@ -46,6 +46,7 @@ def display_images(images, titles=None, cols=4, basesize=14, cmap=None, norm=Non
   return fig
 
 
+# pylint: disable=too-many-locals
 def display_top_masks(image, masks, label_ids, class_names, basesize=14, limit=4, cmap="PuBu_r"):
   """Display the given images and the top few class masks.
 
@@ -121,6 +122,7 @@ def batch_display_top_masks(dataset, class_names, basesize=14, limit=4, cmap="Pu
                       basesize=basesize, limit=limit, cmap=cmap)
 
 
+# pylint: disable=too-many-arguments
 def draw_image(image,
                masks=None,
                bboxes=None,

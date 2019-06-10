@@ -108,6 +108,7 @@ def round_repeats(repeats, global_params):
   return int(math.ceil(multiplier * repeats))
 
 
+# pylint: disable=too-many-instance-attributes
 class MBConvBlock():
   """A class of MBConv: Mobile Inverted Residual Bottleneck.
 
@@ -261,7 +262,7 @@ class MBConvBlock():
     return x
 
 
-# pylint: disable=abstract-method
+# pylint: disable=abstract-method,too-many-instance-attributes
 class Model(tf.keras.Model):
   """A class implements tf.keras.Model for MNAS-like model.
 

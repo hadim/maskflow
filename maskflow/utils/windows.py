@@ -8,7 +8,7 @@ def _get_win_folder_from_registry(csidl_name):
   registry for this guarantees us the correct answer for all CSIDL_*
   names.
   """
-  import _winreg  # pylint: disable=unresolved-import
+  import _winreg  # pylint: disable=import-error
 
   shell_folder_name = {
       "CSIDL_APPDATA": "AppData",

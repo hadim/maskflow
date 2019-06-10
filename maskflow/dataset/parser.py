@@ -85,6 +85,7 @@ def _prune_features(feature):
   return feature
 
 
+# pylint: disable=too-many-arguments
 def parse(tfrecord_path, config, shuffle=False, repeat_count=1,
           shuffle_buffer_size=1000, do_preprocess=True,
           num_parallel_calls=None,

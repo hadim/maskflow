@@ -61,7 +61,7 @@ enable=indexing-exception,old-raise-syntax
 # unbalanced-tuple-unpacking
 # not-context-manager
 # missing-docstring
-disable=missing-docstring,logging-fstring-interpolation
+disable=missing-docstring,logging-fstring-interpolation,suppressed-message,useless-suppression,no-self-use
 
 # Set the cache size for astng objects.
 cache-size=500
@@ -287,7 +287,7 @@ valid-metaclass-classmethod-first-arg=mcs
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=5
+max-args=10
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore

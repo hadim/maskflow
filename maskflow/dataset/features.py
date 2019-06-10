@@ -43,6 +43,7 @@ def get_feature_description(with_bboxes=True, with_label_names=True,
   return feature_description
 
 
+# pylint: disable=too-many-locals
 def build_features_dict(image, image_id, filename, image_format=None,
                         bboxes=None, masks=None, label_ids=None,
                         label_names=None, masks_format="png"):
